@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PruebaTecnicaFinanzauto.Models;
-using PruebaTecnicaFinanzauto.Data; 
+using PruebaTecnicaFinanzauto.Data;
 
 namespace PruebaTecnicaFinanzauto.Service
 {
@@ -16,12 +16,12 @@ namespace PruebaTecnicaFinanzauto.Service
 
         public async Task<List<VistaVenta>> ObtenerReporteVentas()
         {
-        
-            return await _context.VistaVentas.ToListAsync();
+
+            return await _context.VistaVentas.AsNoTracking().ToListAsync(); // AsNoTracking solo lee y no rastrea cambios 
         }
 
 
-        public async Task<List<VistaVenta>> ConsultarVentasPorCedula (string cedula)
+        public async Task<List<VistaVenta>> ConsultarVentasPorCedula(string cedula)
         {
 
             if (string.IsNullOrWhiteSpace(cedula))
@@ -30,7 +30,7 @@ namespace PruebaTecnicaFinanzauto.Service
             }
 
             return await _context.VistaVentas
-                 .FromSqlInterpolated($"EXEC sp_VehiculosPorVendedor {cedula}")
+                 .FromSqlInterpolated($"EXEC sp_VehiculosPorVendedor {cedula}") // Ejecuta el procedimiento almacenado con la cédula como parámetro
                  .ToListAsync();
         }
     }

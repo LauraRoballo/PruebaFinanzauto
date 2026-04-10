@@ -8,9 +8,14 @@ namespace PruebaTecnicaFinanzauto.Models
     {
         [Key]
         public int ID { get; set; }
-
+        [Required]
+        [StringLength(70)]
         public string Nombre { get; set; } = string.Empty;
+        [Required]
+        [StringLength(70)]
         public string Apellido { get; set; } = string.Empty;
+        [Required]
+        [StringLength(20)]
         public string cedula { get; set; } = string.Empty;
 
     }

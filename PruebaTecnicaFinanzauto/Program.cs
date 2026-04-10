@@ -3,23 +3,23 @@ using PruebaTecnicaFinanzauto.Components;
 using PruebaTecnicaFinanzauto.Data;
 using PruebaTecnicaFinanzauto.Service;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args); // Crea una instancia la cual es la clase principal
 
 // Se agregan los servicios 
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+    .AddInteractiveServerComponents(); // Agrega soporte para componentes Razor interactivos en el servidor
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddScoped<VentaService>();
+builder.Services.AddScoped<VentaService>();  // Agrega VentaService 
 
-var app = builder.Build();
+var app = builder.Build(); 
 
 // Se configura el HTTP 
-if (!app.Environment.IsDevelopment())
+if (!app.Environment.IsDevelopment()) 
 {
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+    app.UseExceptionHandler("/Error", createScopeForErrors: true); 
     
     app.UseHsts();
 }
