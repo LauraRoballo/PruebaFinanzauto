@@ -18,5 +18,9 @@ namespace PruebaTecnicaFinanzauto.Models
         [StringLength(20)]
         public string cedula { get; set; } = string.Empty;
 
+        public string Estado { get; set; } = "Activo";
+
+        public string? MotivoEstado { get; set; } 
+
     }
 }

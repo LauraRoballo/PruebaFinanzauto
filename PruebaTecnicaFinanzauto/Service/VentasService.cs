@@ -6,7 +6,7 @@ namespace PruebaTecnicaFinanzauto.Service
 {
     public class VentaService
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ApplicationDbContext _context; 
 
         // El constructor permite que .NET "inyecte" la base de datos aquí
         public VentaService(ApplicationDbContext context)
@@ -17,7 +17,7 @@ namespace PruebaTecnicaFinanzauto.Service
         public async Task<List<VistaVenta>> ObtenerReporteVentas()
         {
 
-            return await _context.VistaVentas.AsNoTracking().ToListAsync(); // AsNoTracking solo lee y no rastrea cambios 
+            return await _context.VistaVentas.AsNoTracking().ToListAsync(); // AsNoTracking solo lee y no rastrea cambios
         }
 
 
