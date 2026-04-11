@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
+using System.ComponentModel.DataAnnotations.Schema; // Importa anotaciones de datos para definir la estructura
 namespace PruebaTecnicaFinanzauto.Models
 {
     [Table("Vendedores")]
@@ -16,9 +15,9 @@ namespace PruebaTecnicaFinanzauto.Models
         public string Apellido { get; set; } = string.Empty;
         [Required]
         [StringLength(20)]
-        public string cedula { get; set; } = string.Empty;
+        public string Cedula { get; set; } = string.Empty;
 
-        public string Estado { get; set; } = "Activo";
+        public EstadoVendedor Estado { get; set; } = EstadoVendedor.Activo; // Se llama a EstadoVendedor donde estan los estados posibles 
 
         public string? MotivoEstado { get; set; } 
 
