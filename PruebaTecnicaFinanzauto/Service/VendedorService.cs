@@ -1,5 +1,7 @@
 ﻿using PruebaTecnicaFinanzauto.Data;
 using PruebaTecnicaFinanzauto.Models;
+using PruebaTecnicaFinanzauto.Models.DTOs;
+
 
 namespace PruebaTecnicaFinanzauto.Service
 {
@@ -13,8 +15,8 @@ namespace PruebaTecnicaFinanzauto.Service
         }
 
 
-        // Obtener un vendedor por su cedula, si no existe lanza una excepcion
-        private Vendedores ObtenerVendedor(string cedula)
+        // Obtener un vendedor por su cedula
+        public Vendedores ObtenerVendedor(string cedula)
         {
             var vendedor = _context.Vendedores
                 .FirstOrDefault(v => v.Cedula == cedula);
@@ -26,6 +28,7 @@ namespace PruebaTecnicaFinanzauto.Service
 
             return vendedor;
         }
+      
 
         // Validar si el vendedor NO existe, si ya existe lanza una excepcion (crear)
         public void ValidarVendedorNoExiste(string cedula)
@@ -87,6 +90,40 @@ namespace PruebaTecnicaFinanzauto.Service
             _context.SaveChanges();
         }
 
+        // Actualizar vendedor 
+
+        public void ActualizarVendedor(string cedula, ActualizarVendedorDto datosActualizados)
+        {
+            var vendedor = ObtenerVendedor(cedula);
+
+            if (string.IsNullOrWhiteSpace(datosActualizados.Nombre))
+                throw new Exception("El nombre es obligatorio");
+
+            if (string.IsNullOrWhiteSpace(datosActualizados.Apellido))
+                throw new Exception("El apellido es obligatorio");
+
+            if (string.IsNullOrWhiteSpace(datosActualizados.Cedula))
+                throw new Exception("La cedula es obligatoria");
+
+            if(vendedor.Estado !=EstadoVendedor.Activo)
+            {
+                throw new Exception ("No se puede actualizar un vendedor que no esta activo");
+            }
+
+            vendedor.Nombre = datosActualizados.Nombre;
+            vendedor.Apellido = datosActualizados.Apellido;
+
+
+            if (_context.Vendedores.Any(ven => ven.Cedula == datosActualizados.Cedula && ven.ID != vendedor.ID))
+            {
+                throw new Exception("La cedula ya esta en uso por otro vendedor");
+            }
+
+            vendedor.Cedula = datosActualizados.Cedula;
+
+            _context.SaveChanges();
+        }
+
         // Crear vendedor 
         public Vendedores CrearVendedor(Vendedores vendedor)
         {
@@ -101,6 +138,15 @@ namespace PruebaTecnicaFinanzauto.Service
             return vendedor;
         }
 
-       
+        // Obtener todos los vendedores
+        public Vendedores ObtenerPorCedula(string cedula)
+        {
+            return ObtenerVendedor(cedula);
+        }
+
+        public List<Vendedores> ObtenerTodos()
+        {
+            return _context.Vendedores.ToList();
+        }
     }
 }

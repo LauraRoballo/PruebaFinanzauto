@@ -13,20 +13,37 @@ namespace PruebaTecnicaFinanzauto.Service
         {
             _context = context;
         }
-
-        public Ventas CrearVenta(Ventas venta)
+        // Método para crear una nueva venta
+        public Ventas CrearVenta(string placa, string cedula, decimal precioVenta)
         {
-            var existe = _context.Vehiculos.FirstOrDefault(v => v.Id == venta.VehiculoId);  // Verificar si el vehículo existe
+            var vehiculo = _context.Vehiculos.FirstOrDefault(v => v.Placa == placa); // Se valida si la placa existe
 
-            if (existe == null)
+            if (vehiculo == null)
+                throw new Exception("El vehículo no existe");
+
+            var vendedor = _context.Vendedores.FirstOrDefault(v => v.Cedula == cedula); // Se valida si la cédula del vendedor existe
+
+            if (vendedor == null)
+                throw new Exception("El vendedor no existe");
+
+            if (vendedor.Estado != EstadoVendedor.Activo) // Se valida el estado del vendedor
+                throw new Exception("El vendedor no está activo");
+
+            var venta = new Ventas
             {
-                throw new Exception("El vehiculo no existe");
-            }
-            _context.Ventas.Add(venta); // Agrega la venta a la base de datos
-            _context.SaveChanges(); // Guarda los cambios en la base de datos
-            return venta; 
+                Fecha = DateTime.Now,
+                PrecioVenta = precioVenta,
+                VehiculoId = vehiculo.Id,
+                VendedorId = vendedor.ID
+            };
+
+            _context.Ventas.Add(venta);
+            _context.SaveChanges();
+
+            return venta;
         }
 
+        // Método para eliminar una venta por cédula y placa (venta mal ingresada)
         public void EliminarVenta(string cedula, string placa)
         {
             var venta = _context.Ventas
@@ -42,20 +59,20 @@ namespace PruebaTecnicaFinanzauto.Service
             _context.SaveChanges();
         }
      
-
+        // Se obtiene la vista de las ventas (VistaVenta) 
         public async Task<List<VistaVenta>> ObtenerReporteVentas() // Metodo para obtener reporteVentas sin parar el programa (async/await)
         {
 
             return await _context.VistaVentas.AsNoTracking().ToListAsync(); // AsNoTracking solo lee y no rastrea cambios 
         }
 
-
+        // Se consulta con cedula de vendedor y se obtienen las ventas. Se utiliza el procedimiento almacenado (Stored Procedure)
         public async Task<List<VistaVenta>> ConsultarVentasPorCedula(string cedula)
         {
 
             if (string.IsNullOrWhiteSpace(cedula))
             {
-                return new List<VistaVenta>(); // Retorna lista vacía si no hay cédula
+                return new List<VistaVenta>(); // Retorna lista vacía si no hay ventas para la cédula
             }
 
             return await _context.VistaVentas

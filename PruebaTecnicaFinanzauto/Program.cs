@@ -14,6 +14,12 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddScoped<VentaService>();  // Agrega VentaService 
 
+builder.Services.AddScoped<VendedorService>(); // Agrega VendedorService
+
+builder.Services.AddScoped<MarcaService>(); // Agrega MarcaService
+
+builder.Services.AddScoped<VehiculoService>(); // Agrega VehiculoService
+
 var app = builder.Build(); 
 
 // Se configura el HTTP 
