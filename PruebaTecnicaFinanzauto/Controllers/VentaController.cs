@@ -4,8 +4,8 @@ using PruebaTecnicaFinanzauto.Service;
 namespace PruebaTecnicaFinanzauto.Controllers
 {
     [ApiController]
-    [Route("api/[contoller]")]
-    public class VentaController : Controller
+    [Route("api/[controller]")]
+    public class VentaController : ControllerBase
     {
 
         private readonly VentaService _ventaService; 
@@ -24,10 +24,10 @@ namespace PruebaTecnicaFinanzauto.Controllers
 
         // Endpoint para obtener todas las ventas (VistaVenta)
         [HttpGet]
-        public IActionResult ObtenerReporteVentas()
+        public async Task<IActionResult> ObtenerReporteVentas()
         {
-            var vendedores = _ventaService.ObtenerReporteVentas();
-            return Ok(vendedores);
+            var ventas = await _ventaService.ObtenerReporteVentas();
+            return Ok(ventas);
         }
 
         // Endpoint para crear una nueva venta

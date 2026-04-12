@@ -1,12 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PruebaTecnicaFinanzauto.Models;
+using PruebaTecnicaFinanzauto.Models.DTOs;
 using PruebaTecnicaFinanzauto.Service;
 
 namespace PruebaTecnicaFinanzauto.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class MarcaController : Controller
+    public class MarcaController : ControllerBase
     {
         private readonly MarcaService _service; // Inyectar el MarcaService para usar sus metodos
 
@@ -25,9 +26,30 @@ namespace PruebaTecnicaFinanzauto.Controllers
 
         // Endpoint para crear una nueva marca
         [HttpPost]
-        public IActionResult CrearMarcas(Marcas marca)
+        public IActionResult CrearMarcas([FromBody] Marcas marca)
         {
-            return Ok(_service.CrearMarcas(marca));
+            try
+            {
+                return Ok(_service.CrearMarcas(marca));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        // Endpoint para actualizar una marca por su nombre
+        [HttpPut("{nombre}")]
+        public IActionResult ActualizarMarca(string nombre, [FromBody] ActualizarMarcaDto dto)
+        {
+            try
+            {
+                var actualizada = _service.ActualizarMarca(nombre, dto);
+                return Ok(actualizada);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
         // Endpoint para eliminar una marca por su nombre
         [HttpDelete("{nombre}")]

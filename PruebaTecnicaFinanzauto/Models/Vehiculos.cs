@@ -19,8 +19,10 @@ namespace PruebaTecnicaFinanzauto.Models
         [Required]
         [StringLength(50)]
         public string Color { get; set; } = string.Empty;
+        [Required]
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal PrecioReferencia { get; set; }
 
-        
         public string? Placa { get; set; } = string.Empty; // Hay vehiculos nuevos que no tienen placa aun 
 
         public int MarcaId { get; set; }

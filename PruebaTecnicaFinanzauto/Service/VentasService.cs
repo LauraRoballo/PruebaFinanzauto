@@ -37,6 +37,9 @@ namespace PruebaTecnicaFinanzauto.Service
                 VendedorId = vendedor.ID
             };
 
+            var YaVendido = _context.Ventas.Any(v => v.VehiculoId == vehiculo.Id);
+            if (YaVendido) throw new Exception("Este vehículo ya cuenta con una venta registrada.");
+
             _context.Ventas.Add(venta);
             _context.SaveChanges();
 
@@ -48,7 +51,7 @@ namespace PruebaTecnicaFinanzauto.Service
         {
             var venta = _context.Ventas
                 .Include(ve => ve.Vehiculo)
-                .Include(ve => ve.Vendedor)
+                .Include(ve => ve.Vendedor) 
                 .FirstOrDefault(ve => ve.Vehiculo.VIN == vin && ve.Vendedor.Cedula == cedula); // Busca la venta por vin y cédula)
 
             if (venta == null)

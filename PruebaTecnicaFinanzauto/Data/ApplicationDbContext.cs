@@ -26,6 +26,8 @@ namespace PruebaTecnicaFinanzauto.Data
                 entity.ToView("vistaVentas"); // Nombre de SQL
             });
 
+
+
             // Configuración adicional para Vehiculos
             modelBuilder.Entity<Vehiculos>()
             .HasIndex(v => v.VIN) // Indice en VIN para mejorar la búsqueda por VIN
@@ -34,6 +36,12 @@ namespace PruebaTecnicaFinanzauto.Data
             modelBuilder.Entity<Vehiculos>()
             .HasIndex(v => v.Placa) // Indice en Placa 
             .IsUnique(); //  Evita por completo que existan dos vehiculos con la misma placa
+
+         
+            modelBuilder.Entity<Marcas>()
+                .HasIndex(m => m.Nombre)
+                .IsUnique();
+        
 
             foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys())) // Elimiación cascada, para evitar la eliminación de datos relacionados con otra tabla 
             {

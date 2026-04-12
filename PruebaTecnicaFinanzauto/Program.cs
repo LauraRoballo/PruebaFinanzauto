@@ -3,38 +3,48 @@ using PruebaTecnicaFinanzauto.Components;
 using PruebaTecnicaFinanzauto.Data;
 using PruebaTecnicaFinanzauto.Service;
 
-var builder = WebApplication.CreateBuilder(args); // Crea una instancia la cual es la clase principal
+var builder = WebApplication.CreateBuilder(args);
 
-// Se agregan los servicios 
+// Servicios Blazor
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents(); // Agrega soporte para componentes Razor interactivos en el servidor
+    .AddInteractiveServerComponents();
 
+// DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddScoped<VentaService>();  // Agrega VentaService 
+// Servicios
+builder.Services.AddScoped<VentaService>();
+builder.Services.AddScoped<VendedorService>();
+builder.Services.AddScoped<MarcaService>();
+builder.Services.AddScoped<VehiculoService>();
 
-builder.Services.AddScoped<VendedorService>(); // Agrega VendedorService
+// Controllers API
+builder.Services.AddControllers();
 
-builder.Services.AddScoped<MarcaService>(); // Agrega MarcaService
+var app = builder.Build();
 
-builder.Services.AddScoped<VehiculoService>(); // Agrega VehiculoService
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
 
-var app = builder.Build(); 
-
-// Se configura el HTTP 
-if (!app.Environment.IsDevelopment()) 
+// Configuración HTTP
+if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error", createScopeForErrors: true); 
-    
+    app.UseExceptionHandler("/Error", createScopeForErrors: true);
     app.UseHsts();
 }
+
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
-
 app.UseAntiforgery();
 
-app.MapStaticAssets();
+// Mapear controllers primero
+app.MapControllers();
+
+// Mapear Blazor solo una vez
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
