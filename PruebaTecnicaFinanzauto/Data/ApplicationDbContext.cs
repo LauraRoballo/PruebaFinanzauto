@@ -26,6 +26,11 @@ namespace PruebaTecnicaFinanzauto.Data
                 entity.ToView("vistaVentas"); // Nombre de SQL
             });
 
+            // Configuración adicional para Vehiculos
+            modelBuilder.Entity<Vehiculos>()
+            .HasIndex(v => v.VIN) // Indice en VIN para mejorar la búsqueda por VIN
+            .IsUnique();// Evita por completo que existan dos vehiculos con el mismo VIN
+
             modelBuilder.Entity<Vehiculos>()
             .HasIndex(v => v.Placa) // Indice en Placa 
             .IsUnique(); //  Evita por completo que existan dos vehiculos con la misma placa

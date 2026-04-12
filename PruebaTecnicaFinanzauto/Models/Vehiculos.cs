@@ -10,6 +10,9 @@ namespace PruebaTecnicaFinanzauto.Models
         public int Id { get; set; }
 
         [Required]
+        public string VIN { get; set; } = string.Empty;
+
+        [Required]
         [StringLength(100)]
         public string Modelo { get; set; } = string.Empty;
 
@@ -17,8 +20,8 @@ namespace PruebaTecnicaFinanzauto.Models
         [StringLength(50)]
         public string Color { get; set; } = string.Empty;
 
-        [Required]
-        public string Placa { get; set; } = string.Empty;
+        
+        public string? Placa { get; set; } = string.Empty; // Hay vehiculos nuevos que no tienen placa aun 
 
         public int MarcaId { get; set; }
 

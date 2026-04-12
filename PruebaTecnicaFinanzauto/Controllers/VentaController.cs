@@ -32,17 +32,17 @@ namespace PruebaTecnicaFinanzauto.Controllers
 
         // Endpoint para crear una nueva venta
         [HttpPost]
-        public IActionResult CrearVenta(string placa, string cedula, decimal precioVenta)
+        public IActionResult CrearVenta(string vin, string cedula, decimal precioVenta)
         {
-            var venta = _ventaService.CrearVenta(placa, cedula, precioVenta);
+            var venta = _ventaService.CrearVenta(vin, cedula, precioVenta);
             return Ok(venta);
         }
 
-        // Enpoint para eliminar una venta por cédula y placa (venta mal ingresada)
-        [HttpDelete("{cedula}/{placa}")]
-        public IActionResult EliminarVenta(string cedula, string placa)
+        // Enpoint para eliminar una venta por cédula y vin (venta mal ingresada)
+        [HttpDelete("{cedula}/{vin}")]
+        public IActionResult EliminarVenta(string cedula, string vin)
         {
-            _ventaService.EliminarVenta(cedula, placa);
+            _ventaService.EliminarVenta(cedula, vin);
             return NoContent();
         }
     }

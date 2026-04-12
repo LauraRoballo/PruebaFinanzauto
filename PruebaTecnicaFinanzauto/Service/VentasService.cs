@@ -14,22 +14,22 @@ namespace PruebaTecnicaFinanzauto.Service
             _context = context;
         }
         // Método para crear una nueva venta
-        public Ventas CrearVenta(string placa, string cedula, decimal precioVenta)
+        public Ventas CrearVenta(string vin, string cedula, decimal precioVenta)
         {
-            var vehiculo = _context.Vehiculos.FirstOrDefault(v => v.Placa == placa); // Se valida si la placa existe
+            var vehiculo = _context.Vehiculos.FirstOrDefault(v => v.VIN == vin); // Busca el vehículo por VIN
 
             if (vehiculo == null)
                 throw new Exception("El vehículo no existe");
 
-            var vendedor = _context.Vendedores.FirstOrDefault(v => v.Cedula == cedula); // Se valida si la cédula del vendedor existe
+            var vendedor = _context.Vendedores.FirstOrDefault(v => v.Cedula == cedula); // Busca el vendedor por cédula
 
             if (vendedor == null)
                 throw new Exception("El vendedor no existe");
 
-            if (vendedor.Estado != EstadoVendedor.Activo) // Se valida el estado del vendedor
+            if (vendedor.Estado != EstadoVendedor.Activo) // Verifica que el vendedor esté activo
                 throw new Exception("El vendedor no está activo");
 
-            var venta = new Ventas
+            var venta = new Ventas 
             {
                 Fecha = DateTime.Now,
                 PrecioVenta = precioVenta,
@@ -43,13 +43,13 @@ namespace PruebaTecnicaFinanzauto.Service
             return venta;
         }
 
-        // Método para eliminar una venta por cédula y placa (venta mal ingresada)
-        public void EliminarVenta(string cedula, string placa)
+        // Método para eliminar una venta por cédula y vin (venta mal ingresada)
+        public void EliminarVenta(string cedula, string vin)
         {
             var venta = _context.Ventas
                 .Include(ve => ve.Vehiculo)
                 .Include(ve => ve.Vendedor)
-                .FirstOrDefault(ve => ve.Vehiculo.Placa == placa && ve.Vendedor.Cedula == cedula); // Busca la venta por placa y cédula)
+                .FirstOrDefault(ve => ve.Vehiculo.VIN == vin && ve.Vendedor.Cedula == cedula); // Busca la venta por vin y cédula)
 
             if (venta == null)
             {
