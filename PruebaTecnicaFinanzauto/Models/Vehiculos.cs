@@ -28,6 +28,6 @@ namespace PruebaTecnicaFinanzauto.Models
         public int MarcaId { get; set; }
 
         [ForeignKey("MarcaId")]
-        public virtual Marcas Marca { get; set; } = null!;
+        public virtual Marcas Marca { get; set; } = null!; // Relación con la tabla Marcas 
     }
 }

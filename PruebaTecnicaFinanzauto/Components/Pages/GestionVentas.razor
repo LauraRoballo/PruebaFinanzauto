@@ -1,0 +1,67 @@
+﻿@page "/"
+@page "/gestion-ventas"
+@using PruebaTecnicaFinanzauto.Models
+@using PruebaTecnicaFinanzauto.Models.DTOs
+@using PruebaTecnicaFinanzauto.Service
+@inject VentaService VentaService
+
+<h3>Eliminar Venta Mal Ingresada</h3>
+
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>Vehículo / VIN</th>
+            <th>Vendedor</th>
+            <th>Acción</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (listaVentas != null && listaVentas.Any())
+        {
+            @foreach (var v in listaVentas)
+            {
+                <tr>
+                    <td>@v.Vehiculo</td>
+                    <td>@v.Vendedor</td>
+                    <td>
+                        <button class="btn btn-danger" @onclick="() => Eliminar(v.Vendedor, v.Vehiculo)">
+                            <i class="bi bi-trash"></i> Eliminar
+                        </button>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="3" class="text-center">No hay ventas registradas.</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<VistaVenta> listaVentas = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Cargamos los datos al iniciar la página
+        listaVentas = await VentaService.ObtenerReporteVentas();
+    }
+
+    private async Task Eliminar(string cedula, string vin)
+    {
+        try
+        {
+            // Llamamos al servicio para eliminar
+            VentaService.EliminarVenta(cedula, vin);
+            
+            // Refrescamos la lista automáticamente
+            listaVentas = await VentaService.ObtenerReporteVentas();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al eliminar: {ex.Message}");
+        }
+    }
+}

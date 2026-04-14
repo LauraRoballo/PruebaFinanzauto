@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using PruebaTecnicaFinanzauto.Models.DTOs;
 using PruebaTecnicaFinanzauto.Service;
 
 namespace PruebaTecnicaFinanzauto.Controllers
@@ -15,11 +16,15 @@ namespace PruebaTecnicaFinanzauto.Controllers
             _ventaService = ventaService;
         }
         // Endpoint para consultar las ventas por cédula del vendedor (SP)
+        // En VentaController.cs
+
         [HttpGet("{cedula}")]
-        public IActionResult ConsultarVentasPorCedula(string cedula)
+        public async Task<IActionResult> ConsultarVentasPorCedula(string cedula)
         {
-            var vendedor = _ventaService.ConsultarVentasPorCedula(cedula);
-            return Ok(vendedor);
+            
+            var ventas = await _ventaService.ConsultarVentasPorCedula(cedula);
+
+            return Ok(ventas);
         }
 
         // Endpoint para obtener todas las ventas (VistaVenta)
@@ -31,19 +36,33 @@ namespace PruebaTecnicaFinanzauto.Controllers
         }
 
         // Endpoint para crear una nueva venta
-        [HttpPost]
-        public IActionResult CrearVenta(string vin, string cedula, decimal precioVenta)
-        {
-            var venta = _ventaService.CrearVenta(vin, cedula, precioVenta);
-            return Ok(venta);
-        }
 
+        [HttpPost]
+        public async Task<IActionResult> CrearVenta([FromBody] CrearVentaDto dto)
+        {
+            try
+            {
+                var venta = await _ventaService.CrearVenta(dto);
+                return Ok(venta);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
         // Enpoint para eliminar una venta por cédula y vin (venta mal ingresada)
         [HttpDelete("{cedula}/{vin}")]
-        public IActionResult EliminarVenta(string cedula, string vin)
+        public async Task<IActionResult> EliminarVenta(string cedula, string vin)
         {
-            _ventaService.EliminarVenta(cedula, vin);
-            return NoContent();
+            try
+            {
+                await _ventaService.EliminarVenta(cedula, vin);
+                return Ok(new { mensaje = "Venta eliminada" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

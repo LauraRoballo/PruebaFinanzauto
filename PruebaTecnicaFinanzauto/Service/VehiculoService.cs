@@ -1,4 +1,5 @@
-﻿using PruebaTecnicaFinanzauto.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using PruebaTecnicaFinanzauto.Data;
 using PruebaTecnicaFinanzauto.Models;
 using PruebaTecnicaFinanzauto.Models.DTOs;
 
@@ -6,64 +7,77 @@ namespace PruebaTecnicaFinanzauto.Service
 {
     public class VehiculoService
     {
+        private readonly ApplicationDbContext _context; // Inyectamos DbContext 
 
-        private readonly ApplicationDbContext _context;
-
-        public VehiculoService(ApplicationDbContext context)
+        public VehiculoService(ApplicationDbContext context) // Constructor 
         {
             _context = context;
         }
 
-
         // Método para crear un nuevo vehículo
-        public Vehiculos CrearVehiculo(Vehiculos vehiculo)
+        public async Task<Vehiculos> CrearVehiculo(CrearVehiculoDto dto)
         {
-            var marca = _context.Marcas.FirstOrDefault(ma => ma.ID == vehiculo.MarcaId);
+            var marca = await _context.Marcas.FirstOrDefaultAsync(ma => ma.Nombre.ToLower() == dto.NombreMarca.ToLower().Trim()); // Buscamos la marca por nombre (ignorando mayúsculas y espacios)
+
             if (marca == null)
-                throw new Exception("La marca no existe");
-            _context.Vehiculos.Add(vehiculo);
-            _context.SaveChanges();
+                throw new Exception($"La marca '{dto.NombreMarca}' no existe.");
+
+            var vehiculo = new Vehiculos
+            {
+                VIN = dto.VIN,
+                Modelo = dto.Modelo,
+                Color = dto.Color,
+                PrecioReferencia = dto.PrecioReferencia,
+                Placa = dto.Placa, // Opcional
+                MarcaId = marca.ID // No se debe escribir ya que lo lee con el nombre de marca ingresado y se adigna el Id 
+            };
+
+            _context.Vehiculos.Add(vehiculo); // Agregamos el nuevo vehiculo 
+            await _context.SaveChangesAsync();
 
             return vehiculo;
         }
-        // Obtener todos los vehiculos
-        public List<Vehiculos> ObtenerVehiculos()
+
+        // Obtener vehiculos con su marca relacionada en vez de Id
+        public async Task<List<Vehiculos>> ObtenerVehiculos()
         {
-            return _context.Vehiculos.ToList();
+            // Usamos .Include(v => v.Marca) para traer los datos de la tabla relacionada
+            return await _context.Vehiculos
+                .Include(v => v.Marca) 
+                .AsNoTracking() // Mejora el rendimiento al no rastrear los cambios de las entidades (ayuda para grandes cantidades de datos que solo se deseen mostrar)
+                .ToListAsync(); 
         }
 
-
-
-        // Actualizar un vehículo existente
-
-        public Vehiculos ActualizarVehiculo(string vin, ActualizarVehiculoDto dto)
+        // Método para actualizar un vehículo existente
+        public async Task<Vehiculos> ActualizarVehiculo(string vinOriginal, ActualizarVehiculoDto dto)
         {
-            var vehiculo = _context.Vehiculos.FirstOrDefault(v => v.VIN == vin);
+            var vehiculo = await _context.Vehiculos.FirstOrDefaultAsync(v => v.VIN == vinOriginal);
 
             if (vehiculo == null)
-                throw new Exception("El vehículo no existe");
+                throw new Exception("El vehículo no existe.");
 
-            // validar VIN duplicado si cambia
-            if (vehiculo.VIN != dto.VIN)
-            {
-                var existe = _context.Vehiculos.Any(v => v.VIN == dto.VIN);
-                if (existe)
-                    throw new Exception("Ya existe otro vehículo con ese VIN");
-            }
+            // Candado de Venta
+            var yaFueVendido = await _context.Ventas.AnyAsync(v => v.VehiculoId == vehiculo.Id);
 
-            var marca = _context.Marcas.FirstOrDefault(m => m.ID == dto.MarcaId);
+            if (yaFueVendido)
+                throw new Exception("No se pueden modificar los datos de un vehículo que ya cuenta con una venta registrada.");
+
+          
+            var marca = await _context.Marcas.FirstOrDefaultAsync(m => m.Nombre.ToLower() == dto.MarcaNombre.ToLower().Trim()); // Se busca la marca que se le desea actualizar al vehiculo para confirmar si existe 
+
             if (marca == null)
-                throw new Exception("La marca no existe");
+                throw new Exception($"La marca '{dto.MarcaNombre}' no existe.");
 
-            vehiculo.VIN = dto.VIN;
+            // Si cumple todo
             vehiculo.Modelo = dto.Modelo;
-            vehiculo.MarcaId = dto.MarcaId;
             vehiculo.Color = dto.Color;
-            vehiculo.Placa = dto.Placa;
             vehiculo.PrecioReferencia = dto.PrecioReferencia;
+            vehiculo.MarcaId = marca.ID;
 
-            _context.SaveChanges();
+            if (!string.IsNullOrEmpty(dto.Placa))
+                vehiculo.Placa = dto.Placa;
 
+            await _context.SaveChangesAsync();
             return vehiculo;
         }
     }

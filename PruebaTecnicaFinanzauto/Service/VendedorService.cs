@@ -1,7 +1,7 @@
-﻿using PruebaTecnicaFinanzauto.Data;
+﻿using Microsoft.EntityFrameworkCore; 
+using PruebaTecnicaFinanzauto.Data;
 using PruebaTecnicaFinanzauto.Models;
 using PruebaTecnicaFinanzauto.Models.DTOs;
-
 
 namespace PruebaTecnicaFinanzauto.Service
 {
@@ -13,13 +13,13 @@ namespace PruebaTecnicaFinanzauto.Service
         {
             _context = context;
         }
+        // Metodo ObtenerVendedor
 
-
-        // Obtener un vendedor por su cedula
-        public Vendedores ObtenerVendedor(string cedula)
+        //  Obtener un vendedor por cedula
+        public async Task<Vendedores> ObtenerVendedor(string cedula)
         {
-            var vendedor = _context.Vendedores
-                .FirstOrDefault(v => v.Cedula == cedula);
+            // Solo busca por cédula, no importa si está bloqueado o inactivo
+            var vendedor = await _context.Vendedores.FirstOrDefaultAsync(v => v.Cedula == cedula);
 
             if (vendedor == null)
             {
@@ -28,125 +28,87 @@ namespace PruebaTecnicaFinanzauto.Service
 
             return vendedor;
         }
-      
 
-        // Validar si el vendedor NO existe, si ya existe lanza una excepcion (crear)
-        public void ValidarVendedorNoExiste(string cedula)
+        // Desactivar 
+        public async Task DesactivarVendedor(string cedula, string motivo)
         {
-            var vendedor = _context.Vendedores
-                .FirstOrDefault(ven => ven.Cedula == cedula);
+            var vendedor = await ObtenerVendedor(cedula); // Buscamos al vendedor
 
-            if (vendedor != null)
-            {
-                throw new Exception("El vendedor ya existe");
-            }
+            vendedor.Estado = EstadoVendedor.Inactivo; // Cambiamos el estado (ej. a 1 (inactivo))
+            vendedor.MotivoEstado = motivo; 
+
+            await _context.SaveChangesAsync(); 
         }
 
-        // Validar que el vendedor este activo
-        public void ValidarVendedorActivo(string cedula)
+        // Bloquear 
+        public async Task BloquearVendedor(string cedula, string motivo)
         {
-            var vendedor = ObtenerVendedor(cedula);
+            var vendedor = await ObtenerVendedor(cedula); // Buscamos al vendedor
 
-            if (vendedor.Estado != EstadoVendedor.Activo)
-            {
-                throw new Exception("El vendedor no esta activo");
-            }
+            vendedor.Estado = EstadoVendedor.Bloqueado; // Cambiamos el estado (ej. a 2)
+            vendedor.MotivoEstado = motivo;  
+
+            await _context.SaveChangesAsync(); 
         }
 
-        // Desactivar un vendedor 
-        public void DesactivarVendedor(string cedula, string motivo)
+        // Activar vendedor 
+        public async Task ActivarVendedor(string cedula)
         {
-            var vendedor = ObtenerVendedor(cedula);
-
-            vendedor.Estado = EstadoVendedor.Inactivo;
-            vendedor.MotivoEstado = motivo;
-
-            _context.SaveChanges();
-        }
-
-        // Bloquear un vendedor
-        public void BloquearVendedor(string cedula, string motivo)
-        {
-            var vendedor = ObtenerVendedor(cedula);
-
-            vendedor.Estado = EstadoVendedor.Bloqueado;
-            vendedor.MotivoEstado = motivo;
-
-            _context.SaveChanges();
-        }
-        // Metodo para activar un vendedor de nuevo 
-        public void ActivarVendedor(string cedula)
-        {
-            var vendedor = ObtenerVendedor(cedula);
+            var vendedor = await ObtenerVendedor(cedula); // Buscamos al vendedor 
 
             if (vendedor.Estado == EstadoVendedor.Activo)
-            {
                 throw new Exception("El vendedor ya se encuentra activo");
-            }
 
-            vendedor.Estado = EstadoVendedor.Activo; 
-            vendedor.MotivoEstado = null; // Limpia el motivo al activar nuevamente
+            vendedor.Estado = EstadoVendedor.Activo; // Si no esta activo se cambia el estado a Activo
+            vendedor.MotivoEstado = null; // Se limpia el motivo al activar
 
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
-        // Actualizar vendedor 
-
-        public void ActualizarVendedor(string cedula, ActualizarVendedorDto datosActualizados)
-        {
-            var vendedor = ObtenerVendedor(cedula);
-
-            if (string.IsNullOrWhiteSpace(datosActualizados.Nombre))
-                throw new Exception("El nombre es obligatorio");
-
-            if (string.IsNullOrWhiteSpace(datosActualizados.Apellido))
-                throw new Exception("El apellido es obligatorio");
-
-            if (string.IsNullOrWhiteSpace(datosActualizados.Cedula))
-                throw new Exception("La cedula es obligatoria");
-
-            if(vendedor.Estado !=EstadoVendedor.Activo)
-            {
-                throw new Exception ("No se puede actualizar un vendedor que no esta activo");
-            }
-
-            vendedor.Nombre = datosActualizados.Nombre;
-            vendedor.Apellido = datosActualizados.Apellido;
-
-
-            if (_context.Vendedores.Any(ven => ven.Cedula == datosActualizados.Cedula && ven.ID != vendedor.ID))
-            {
-                throw new Exception("La cedula ya esta en uso por otro vendedor");
-            }
-
-            vendedor.Cedula = datosActualizados.Cedula;
-
-            _context.SaveChanges();
-        }
 
         // Crear vendedor 
-        public Vendedores CrearVendedor(Vendedores vendedor)
+        public async Task<Vendedores> CrearVendedor(Vendedores vendedor)
         {
-            ValidarVendedorNoExiste(vendedor.Cedula);
+            var existe = await _context.Vendedores.AnyAsync(v => v.Cedula == vendedor.Cedula);
+            if (existe) throw new Exception("El vendedor ya existe");
 
-            // agrega el vendedor 
             _context.Vendedores.Add(vendedor);
-
-            // guarda el vendedor 
-            _context.SaveChanges();
-
+            await _context.SaveChangesAsync();
             return vendedor;
         }
 
-        // Obtener todos los vendedores
-        public Vendedores ObtenerPorCedula(string cedula)
+        // llama a ObtenerVendedor en un nuevo metodopara obtener un vendedor por cedula 
+        public async Task<Vendedores> ObtenerPorCedula(string cedula)
         {
-            return ObtenerVendedor(cedula);
+            return await ObtenerVendedor(cedula);
+        }
+        // Se crea metodo para obtener todos los vendedores 
+        public async Task<List<Vendedores>> ObtenerTodos()
+        {
+            return await _context.Vendedores.ToListAsync();
         }
 
-        public List<Vendedores> ObtenerTodos()
+        // Actualizar vendedor 
+        public async Task ActualizarVendedor(string cedula, ActualizarVendedorDto datosActualizados)
         {
-            return _context.Vendedores.ToList();
+
+            var vendedor = await ObtenerVendedor(cedula);
+
+            if (string.IsNullOrWhiteSpace(datosActualizados.Nombre)) throw new Exception("El nombre es obligatorio");
+            if (string.IsNullOrWhiteSpace(datosActualizados.Apellido)) throw new Exception("El apellido es obligatorio");
+            if (string.IsNullOrWhiteSpace(datosActualizados.Cedula)) throw new Exception("La cedula es obligatoria");
+
+            if (vendedor.Estado != EstadoVendedor.Activo)
+                throw new Exception("No se puede actualizar un vendedor que no esta activo");
+
+            if (await _context.Vendedores.AnyAsync(ven => ven.Cedula == datosActualizados.Cedula && ven.ID != vendedor.ID))
+                throw new Exception("La cedula ya esta en uso por otro vendedor");
+
+            vendedor.Nombre = datosActualizados.Nombre;
+            vendedor.Apellido = datosActualizados.Apellido;
+            vendedor.Cedula = datosActualizados.Cedula;
+
+            await _context.SaveChangesAsync();
         }
     }
 }

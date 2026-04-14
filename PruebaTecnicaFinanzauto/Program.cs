@@ -5,32 +5,43 @@ using PruebaTecnicaFinanzauto.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Servicios Blazor
-builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
-
-// DbContext
+// 1. DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sqlOptions => sqlOptions.EnableRetryOnFailure()
+    ));
 
-// Servicios
+// 2. Servicios
 builder.Services.AddScoped<VentaService>();
 builder.Services.AddScoped<VendedorService>();
 builder.Services.AddScoped<MarcaService>();
 builder.Services.AddScoped<VehiculoService>();
 
-// Controllers API
-builder.Services.AddControllers();
+// 3. HttpClient 
+builder.Services.AddScoped(sp => new HttpClient
+{
+    BaseAddress = new Uri("https://localhost:44377/")
+});
 
-var app = builder.Build();
-
+// 4. Controllers API
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.ReferenceHandler =
+            System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+
+        options.JsonSerializerOptions.Converters.Add(
+            new System.Text.Json.Serialization.JsonStringEnumConverter());
     });
 
-// Configuración HTTP
+// 5. Blazor
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
+
+var app = builder.Build();
+
+// Pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
@@ -38,13 +49,12 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseAntiforgery();
 
-// Mapear controllers primero
 app.MapControllers();
-
-// Mapear Blazor solo una vez
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 

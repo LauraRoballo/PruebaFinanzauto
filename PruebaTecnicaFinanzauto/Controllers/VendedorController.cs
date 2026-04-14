@@ -6,72 +6,121 @@ using PruebaTecnicaFinanzauto.Service;
 namespace PruebaTecnicaFinanzauto.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/[controller]")] // api/vendedor
     public class VendedorController : ControllerBase
     {
-        // Inyectar el VendedorService para usar sus metodos 
         private readonly VendedorService _service;
 
-        public VendedorController(VendedorService service) // El constructor es VendedorController 
+        public VendedorController(VendedorService service)
         {
             _service = service;
         }
-
-        // Endpoint para obtener un vendedor por su cedula
-
+        // Endpoint para obtener un vendedor por su cédula
         [HttpGet("{cedula}")]
-        public IActionResult ObtenerPorCedula(string cedula)
+        public async Task<IActionResult> ObtenerPorCedula(string cedula)
         {
-            var vendedor = _service.ObtenerPorCedula(cedula);
-            return Ok(vendedor);
+            try
+            {
+                var vendedor = await _service.ObtenerPorCedula(cedula);
+                return Ok(vendedor);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message); // Mensaje de error dado el caso no exista el vendedor 
+            }
         }
-
         // Endpoint para obtener todos los vendedores
         [HttpGet]
-        public IActionResult ObtenerTodos()
+        public async Task<IActionResult> ObtenerTodos()
         {
-            var vendedores = _service.ObtenerTodos();
+            var vendedores = await _service.ObtenerTodos();
             return Ok(vendedores);
         }
 
         // Endpoint para crear un nuevo vendedor
         [HttpPost]
-        public IActionResult Crear([FromBody] Vendedores vendedor)
+        public async Task<IActionResult> Crear([FromBody] Vendedores vendedor)
         {
-            var nuevo = _service.CrearVendedor(vendedor);
-            return Ok(nuevo);
+            try
+            {
+                var nuevo = await _service.CrearVendedor(vendedor);
+                return Ok(nuevo);
+            } catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            
         }
-        // Endpoint para actualizar SOLO el estado del vendedor 
+
+        // Endpoint para activar un vendedor 
+
         [HttpPatch("{cedula}/activar")]
-        public IActionResult Activar(string cedula)
+        public async Task<IActionResult> Activar(string cedula)
         {
-            _service.ActivarVendedor(cedula);
-            return Ok();
+            try
+            {
+                await _service.ActivarVendedor(cedula);
+                return Ok(new { mensaje = "Vendedor activado correctamente" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+         
         }
 
         // Endpoint para bloquear un vendedor
+
         [HttpPatch("{cedula}/bloquear")]
-        public IActionResult Bloquear(string cedula, [FromBody] string motivo)
+        public async Task<IActionResult> Bloquear(string cedula, [FromBody] BloquearVendedorDto dto)
         {
-            _service.BloquearVendedor(cedula, motivo);
-            return Ok();
+            try
+            {
+                await _service.BloquearVendedor(cedula, dto.Motivo);
+                return Ok(new { mensaje = "Vendedor bloqueado correctamente" });
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message); // Mensaje de error dado el caso no exista el vendedor
+            }
+
+          
         }
 
         // Endpoint para desactivar un vendedor
+
         [HttpPatch("{cedula}/desactivar")]
-        public IActionResult Desactivar(string cedula, [FromBody] string motivo)
+        public async Task<IActionResult> Desactivar(string cedula, [FromBody] BloquearVendedorDto dto)
+
         {
-            _service.DesactivarVendedor(cedula, motivo);
-            return Ok();
+            try
+            {
+                await _service.DesactivarVendedor(cedula, dto.Motivo);
+                return Ok(new { mensaje = "Vendedor desactivado correctamente" });
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message); // Mensaje de error dado el caso no exista el vendedor
+            }
+           
         }
 
-        // Endpoint para actualizar los datos de un vendedor (nombre, apellido, cedula)
+        // Endpoint para actualizar los datos de un vendedor
         [HttpPut("{cedula}")]
-        public IActionResult Actualizar(string cedula, [FromBody] ActualizarVendedorDto datosActualizados)
+        public async Task<IActionResult> Actualizar(string cedula, [FromBody] ActualizarVendedorDto datosActualizados)
         {
-            _service.ActualizarVendedor(cedula, datosActualizados);
-            return Ok();
-
+                try
+                {
+                    await _service.ActualizarVendedor(cedula, datosActualizados);
+                    return Ok(new { mensaje = "Datos actualizados correctamente" });
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(ex.Message);
+                }
+           
         }
     }
-}
+}    

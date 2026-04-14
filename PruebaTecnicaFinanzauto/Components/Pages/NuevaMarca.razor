@@ -1,0 +1,32 @@
+﻿@using PruebaTecnicaFinanzauto.Models
+@using PruebaTecnicaFinanzauto.Service
+
+@page "/nueva-marca"
+@inject MarcaService MarcaService
+
+<h3>Registrar Marca</h3>
+
+<EditForm Model="@nuevaMarca" OnValidSubmit="CrearMarca" FormName="crearMarca">
+    <div class="mb-3">
+        <label>Nombre de la Marca:</label>
+        <InputText @bind-Value="nuevaMarca.Nombre" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-primary">Crear Marca</button>
+</EditForm>
+
+@code {
+    private Marcas nuevaMarca = new Marcas();
+
+    private async Task CrearMarca()
+    {
+        try
+        {
+            await MarcaService.CrearMarcas(nuevaMarca);
+            nuevaMarca = new Marcas();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+}

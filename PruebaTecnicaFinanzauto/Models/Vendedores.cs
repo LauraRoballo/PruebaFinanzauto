@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema; // Importa anotaciones de datos para definir la estructura
+using System.ComponentModel.DataAnnotations.Schema;  
 namespace PruebaTecnicaFinanzauto.Models
 {
     [Table("Vendedores")]
@@ -10,9 +10,11 @@ namespace PruebaTecnicaFinanzauto.Models
         [Required]
         [StringLength(70)]
         public string Nombre { get; set; } = string.Empty;
+
         [Required]
         [StringLength(70)]
         public string Apellido { get; set; } = string.Empty;
+
         [Required]
         [StringLength(20)]
         public string Cedula { get; set; } = string.Empty;
