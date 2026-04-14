@@ -1,0 +1,109 @@
+﻿@page "/vendedores"
+@using PruebaTecnicaFinanzauto.Models
+@using PruebaTecnicaFinanzauto.Service
+@inject VendedorService VendedorService
+
+<h3>Vendedores</h3>
+
+@if (mensaje != null)
+{
+    <div class="alert @(esError ? "alert-danger" : "alert-success")">@mensaje</div>
+}
+
+@if (lista == null)
+{
+    <p>Cargando...</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Cédula</th>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var v in lista)
+            {
+                <tr>
+                    <td>@v.Cedula</td>
+                    <td>@v.Nombre</td>
+                    <td>@v.Apellido</td>
+                    <td>
+                        <span class="badge @BadgeClass(v.Estado)">@v.Estado</span>
+                    </td>
+                    <td class="d-flex gap-2">
+                        @if (v.Estado != EstadoVendedor.Activo)
+                        {
+                            <button class="btn btn-success btn-sm" @onclick="() => Activar(v.Cedula)">Activar</button>
+                        }
+                        @if (v.Estado != EstadoVendedor.Inactivo)
+                        {
+                            <button class="btn btn-warning btn-sm" @onclick="() => Desactivar(v.Cedula)">Desactivar</button>
+                        }
+                        @if (v.Estado != EstadoVendedor.Bloqueado)
+                        {
+                            <button class="btn btn-danger btn-sm" @onclick="() => Bloquear(v.Cedula)">Bloquear</button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Vendedores>? lista;
+    private string? mensaje;
+    private bool esError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        lista = await VendedorService.ObtenerTodos();
+    }
+
+    private async Task Activar(string cedula)
+    {
+        try
+        {
+            await VendedorService.ActivarVendedor(cedula);
+            mensaje = "Vendedor activado."; esError = false;
+            lista = await VendedorService.ObtenerTodos();
+        }
+        catch (Exception ex) { mensaje = ex.Message; esError = true; }
+    }
+
+    private async Task Desactivar(string cedula)
+    {
+        try
+        {
+            await VendedorService.DesactivarVendedor(cedula, "Desactivado desde la interfaz");
+            mensaje = "Vendedor desactivado."; esError = false;
+            lista = await VendedorService.ObtenerTodos();
+        }
+        catch (Exception ex) { mensaje = ex.Message; esError = true; }
+    }
+
+    private async Task Bloquear(string cedula)
+    {
+        try
+        {
+            await VendedorService.BloquearVendedor(cedula, "Bloqueado desde la interfaz");
+            mensaje = "Vendedor bloqueado."; esError = false;
+            lista = await VendedorService.ObtenerTodos();
+        }
+        catch (Exception ex) { mensaje = ex.Message; esError = true; }
+    }
+
+    private string BadgeClass(EstadoVendedor estado) => estado switch
+    {
+        EstadoVendedor.Activo => "bg-success",
+        EstadoVendedor.Inactivo => "bg-warning text-dark",
+        EstadoVendedor.Bloqueado => "bg-danger",
+        _ => "bg-secondary"
+    };
+}

@@ -1,32 +1,53 @@
-﻿@using PruebaTecnicaFinanzauto.Models
+﻿@page "/nueva-marca"
+@using PruebaTecnicaFinanzauto.Models
 @using PruebaTecnicaFinanzauto.Service
-
-@page "/nueva-marca"
 @inject MarcaService MarcaService
 
 <h3>Registrar Marca</h3>
 
-<EditForm Model="@nuevaMarca" OnValidSubmit="CrearMarca" FormName="crearMarca">
-    <div class="mb-3">
-        <label>Nombre de la Marca:</label>
-        <InputText @bind-Value="nuevaMarca.Nombre" class="form-control" />
-    </div>
-    <button type="submit" class="btn btn-primary">Crear Marca</button>
-</EditForm>
+@if (mensaje != null)
+{
+    <div class="alert @(esError ? "alert-danger" : "alert-success")">@mensaje</div>
+}
+
+<div class="mb-3">
+    <label>Nombre:</label>
+    <input @bind="nuevaMarca.Nombre" class="form-control" placeholder="Ej: Toyota" />
+</div>
+<div class="mb-3">
+    <label>País de Origen:</label>
+    <input @bind="nuevaMarca.PaisOrigen" class="form-control" placeholder="Ej: Japón" />
+</div>
+<div class="mb-3">
+    <label>Descripción (opcional):</label>
+    <input @bind="nuevaMarca.Descripcion" class="form-control" />
+</div>
+<button class="btn btn-primary" @onclick="CrearMarca" disabled="@cargando">
+    @(cargando ? "Guardando..." : "Crear Marca")
+</button>
 
 @code {
-    private Marcas nuevaMarca = new Marcas();
+    private Marcas nuevaMarca = new();
+    private string? mensaje;
+    private bool esError;
+    private bool cargando;
 
     private async Task CrearMarca()
     {
+        cargando = true;
+        mensaje = null;
         try
         {
             await MarcaService.CrearMarcas(nuevaMarca);
-            nuevaMarca = new Marcas();
+            mensaje = $"Marca '{nuevaMarca.Nombre}' creada exitosamente.";
+            esError = false;
+            nuevaMarca = new();
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            mensaje = ex.Message;
+            esError = true;
         }
+        finally { cargando = false; }
     }
 }

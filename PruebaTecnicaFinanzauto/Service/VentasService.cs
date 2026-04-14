@@ -79,8 +79,7 @@ namespace PruebaTecnicaFinanzauto.Service
         public async Task<List<VistaVenta>> ObtenerReporteVentas() // Metodo para obtener reporteVentas sin parar el programa (async/await)
         {
 
-            return await _context.VistaVentas.
-                AsNoTracking().ToListAsync(); // AsNoTracking solo lee y no rastrea cambios 
+            return await _context.VistaVentas.AsNoTracking().ToListAsync(); // AsNoTracking solo lee y no rastrea cambios 
         }
 
         // Se consulta con cedula de vendedor y se obtienen las ventas. Se utiliza el procedimiento almacenado (Stored Procedure)

@@ -5,7 +5,7 @@
 @using PruebaTecnicaFinanzauto.Service
 @inject VentaService VentaService
 
-<h3>Eliminar Venta Mal Ingresada</h3>
+<h3>Eliminar venta</h3>
 
 <table class="table table-hover">
     <thead>
@@ -24,7 +24,7 @@
                     <td>@v.Vehiculo</td>
                     <td>@v.Vendedor</td>
                     <td>
-                        <button class="btn btn-danger" @onclick="() => Eliminar(v.Vendedor, v.Vehiculo)">
+                        <button class="btn btn-danger" @onclick="() => Eliminar(v.Cedula, v.VIN)">
                             <i class="bi bi-trash"></i> Eliminar
                         </button>
                     </td>
@@ -54,7 +54,7 @@
         try
         {
             // Llamamos al servicio para eliminar
-            VentaService.EliminarVenta(cedula, vin);
+            await VentaService.EliminarVenta(cedula, vin);
             
             // Refrescamos la lista automáticamente
             listaVentas = await VentaService.ObtenerReporteVentas();
