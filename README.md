@@ -1,4 +1,4 @@
-# 🚗 Sistema de Gestión Vehicular - Prueba Técnica Finanzauto
+# 🚗 Sistema de inventario.
 
 Este proyecto es una solución integral desarrollada para la gestión de inventario y ventas de vehículos. Implementa una arquitectura profesional utilizando **DTOs** (Data Transfer Objects) para separar la lógica de datos de la interfaz de usuario, garantizando seguridad y escalabilidad.
 
