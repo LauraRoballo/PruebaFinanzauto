@@ -1,0 +1,264 @@
+﻿@page "/vendedores"
+@rendermode RenderMode.InteractiveServer
+@using PruebaTecnicaFinanzauto.Models
+@using PruebaTecnicaFinanzauto.Models.DTOs
+@using PruebaTecnicaFinanzauto.Service
+@inject VendedorService VendedorService
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>Administración de Vendedores</h3>
+    </div>
+
+    @if (!string.IsNullOrEmpty(mensaje))
+    {
+        <div class="alert @(esError ? "alert-danger" : "alert-success") alert-dismissible fade show shadow-sm border-start border-4"> 
+            @mensaje
+            <button type="button" class="btn-close" @onclick="() => mensaje = null"></button>
+        </div>
+    }
+
+    @* Registro *@
+    <div class="card p-4 shadow-sm mb-4 border-0 bg-light">
+        <h5 class="text-secondary mb-3 small text-uppercase fw-bold">Registrar vendedor</h5>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label small fw-bold">Cédula</label>
+                <input @bind="nuevoVendedor.Cedula" class="form-control" placeholder="Ej: 1019..." />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label small fw-bold">Nombre</label>
+                <input @bind="nuevoVendedor.Nombre" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label small fw-bold">Apellido</label>
+                <input @bind="nuevoVendedor.Apellido" class="form-control" />
+            </div>
+            <div class="col-12 mt-3">
+                <button class="btn btn-primary px-4 shadow-sm" @onclick="Crear">
+                   Guardar Vendedor
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @* Mostrar vendedores *@
+    <div class="card shadow-sm border-0 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Cédula</th>
+                        <th>Nombre Completo</th>
+                        <th>Estado Actual</th>
+                        <th>Motivo / Observación</th>
+                        <th class="text-center">Gestión de Estado</th>
+                        <th class="text-center">Datos</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ven in lista)
+                    {
+                        <tr>
+                            <td><code class="text-dark fw-bold">@ven.Cedula</code></td>
+                            <td>@ven.Nombre @ven.Apellido</td>
+                            <td>
+                                <span class="badge @(ven.Estado == EstadoVendedor.Activo ? "bg-success" : "bg-danger") shadow-sm">
+                                    @ven.Estado
+                                </span>
+                            </td>
+                            <td class="small text-muted italic">
+                                @if (ven.Estado != EstadoVendedor.Activo)
+                                {
+                                    <span> @ven.MotivoEstado</span>
+                                }
+                                else
+                                {
+                                    <span class="text-light-emphasis">---</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm shadow-sm">
+                                    @if (ven.Estado == EstadoVendedor.Activo)
+                                    {
+                                        <button class="btn btn-outline-warning" @onclick='() => AbrirModalEstado(ven, "Inactivo")'>Desactivar</button>
+                                        <button class="btn btn-outline-danger" @onclick='() => AbrirModalEstado(ven, "Bloqueado")'>Bloquear</button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-outline-success" @onclick="() => Activar(ven.Cedula)">
+                                             Re-Activar
+                                        </button>
+                                    }
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-warning btn-sm" @onclick ="() => AbrirEditar(ven)">
+                                    Editar
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@* Edicion *@
+@if (vendedorEditando != null)
+{
+    <div class="modal-backdrop-custom d-flex justify-content-center align-items-center">
+        <div class="card p-4 shadow animate__animated animate__zoomIn" style="max-width: 450px; width: 90%;">
+            <h5 class="mb-3">Actualizando datos: <span class="text-primary">@cedulaOriginal</span></h5>
+               
+            <div class="mb-3">
+                <label class="form-label small fw-bold">Nombre</label>
+                <input @bind="dtoEditar.Nombre" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label small fw-bold">Apellido</label>
+                <input @bind="dtoEditar.Apellido" class="form-control" />
+            </div>
+
+            
+            <div class="d-flex gap-2">
+                <button class="btn btn-success flex-grow-1" @onclick="GuardarEdicion">Guardar Cambios</button>
+                <button class="btn btn-secondary flex-grow-1" @onclick="() => vendedorEditando = null">Cancelar</button>
+            </div>
+        </div>
+    </div>
+}
+
+@* Cambio de estado *@
+@if (vendedorParaCambioEstado != null)
+{
+    <div class="modal-backdrop-custom d-flex justify-content-center align-items-center">
+        <div class="card p-4 shadow animate__animated animate__zoomIn" style="max-width: 450px; width: 90%;">
+            <h5 class="mb-3">Cambiando estado: <span class="text-primary">@accionPendiente</span></h5>
+           
+            
+            <p class="small text-muted">
+                Indique el motivo del cambio para
+                <span class="text-dark fw-bold">@vendedorParaCambioEstado.Nombre @vendedorParaCambioEstado.Apellido</span>
+                como <b>@accionPendiente</b>:
+            </p>
+            
+          
+            <textarea @bind="motivoCambio" class="form-label small fw-bold" placeholder="Escriba el motivo aquí (ej. Vacaciones, Retiro...)"
+                      rows="3"></textarea>
+
+            <div class="d-flex gap-2">
+             
+                <button class="btn btn-success flex-grow-1" @onclick="ConfirmarCambioEstado">
+                    Confirmar 
+                </button>
+                
+                <button class="btn btn-secondary flex-grow-1"
+                        @onclick="() => vendedorParaCambioEstado = null">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Vendedores> lista = new();
+    
+  
+    private CrearVendedorDto nuevoVendedor = new();
+    
+    
+    private ActualizarVendedorDto dtoEditar = new();
+    
+    private Vendedores? vendedorEditando;
+    private Vendedores? vendedorParaCambioEstado;
+    
+    private string cedulaOriginal = "";
+    private string accionPendiente = "";
+    private string motivoCambio = "";
+    private string? mensaje;
+    private bool esError;
+
+    protected override async Task OnInitializedAsync() => await Cargar();
+
+    private async Task Cargar() => lista = await VendedorService.ObtenerTodos();
+
+    private async Task Crear()
+    {
+        try
+        {
+            
+            await VendedorService.CrearVendedor(nuevoVendedor);
+            mensaje = "Vendedor registrado correctamente.";
+            esError = false;
+            nuevoVendedor = new CrearVendedorDto(); 
+            await Cargar();
+        }
+        catch (Exception ex) { mensaje = ex.Message; esError = true; }
+    }
+
+    private void AbrirModalEstado(Vendedores ven, string accion)
+    {
+        vendedorParaCambioEstado = ven;
+        accionPendiente = accion;
+        motivoCambio = "";
+    }
+
+    private async Task ConfirmarCambioEstado()
+    {
+        if (vendedorParaCambioEstado == null) return;
+        try
+        {
+            if (accionPendiente == "Inactivo")
+                await VendedorService.DesactivarVendedor(vendedorParaCambioEstado.Cedula, motivoCambio);
+            else
+                await VendedorService.BloquearVendedor(vendedorParaCambioEstado.Cedula, motivoCambio);
+
+            mensaje = $"El vendedor ha sido marcado como {accionPendiente}.";
+            esError = false;
+            vendedorParaCambioEstado = null;
+            await Cargar();
+        }
+        catch (Exception ex) { mensaje = ex.Message; esError = true; }
+    }
+
+    private async Task Activar(string cedula)
+    {
+        try
+        {
+            await VendedorService.ActivarVendedor(cedula);
+            mensaje = "Vendedor activo.";
+            esError = false;
+            await Cargar();
+        }
+        catch (Exception ex) { mensaje = ex.Message; esError = true; }
+    }
+
+    private void AbrirEditar(Vendedores v)
+    {
+        vendedorEditando = v;
+        cedulaOriginal = v.Cedula;
+        dtoEditar = new ActualizarVendedorDto
+        {
+            Nombre = v.Nombre,
+            Apellido = v.Apellido
+        };
+    }
+
+    private async Task GuardarEdicion()
+    {
+        try
+        {
+            await VendedorService.ActualizarVendedor(cedulaOriginal, dtoEditar);
+            mensaje = "Información del vendedor actualizada.";
+            esError = false;
+            vendedorEditando = null;
+            await Cargar();
+        }
+        catch (Exception ex) { mensaje = ex.Message; esError = true; }
+    }
+}

@@ -1,0 +1,63 @@
+﻿@page "/nueva-venta"
+@rendermode RenderMode.InteractiveServer
+@using PruebaTecnicaFinanzauto.Models.DTOs
+@using PruebaTecnicaFinanzauto.Service
+@inject VentaService VentaService
+
+<div class="container mt-4" style="max-width: 600px;">
+    <div class="card shadow">
+        <div class="card-header bg-success text-white">
+            <h4 class="mb-0">Registrar venta</h4>
+        </div>
+        <div class="card-body">
+            @if (!string.IsNullOrEmpty(mensaje))
+            {
+                <div class="alert @(esError ? "alert-danger" : "alert-success")">@mensaje</div>
+            }
+
+            <div class="mb-3">
+                <label class="fw-bold">VIN del Vehículo:</label>
+                <input @bind="dto.VIN" class="form-control" placeholder="Ingrese el vin..." />
+            </div>
+            <div class="mb-3">
+                <label class="fw-bold">Cédula del vendedor:</label>
+                <input @bind="dto.Cedula" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label class="fw-bold">Precio de venta final:</label>
+                <input type="number" @bind="dto.PrecioVenta" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label class="fw-bold">Placa:</label>
+                <input @bind="dto.Placa" class="form-control" />
+            </div>
+
+            <button class="btn btn-success w-100 py-2" @onclick="ProcesarVenta">
+                Confirmar Venta
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private CrearVentaDto dto = new();
+    private string? mensaje;
+    private bool esError;
+
+    private async Task ProcesarVenta()
+    {
+        mensaje = null;
+        try
+        {
+            await VentaService.CrearVenta(dto);
+            mensaje = "Venta registrada exitosamente";
+            esError = false;
+            dto = new();
+        }
+        catch (Exception ex)
+        {
+            mensaje = ex.Message;
+            esError = true;
+        }
+    }
+}

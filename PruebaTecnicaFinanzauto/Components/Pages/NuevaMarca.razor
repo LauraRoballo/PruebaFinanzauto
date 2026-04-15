@@ -1,53 +1,195 @@
 ﻿@page "/nueva-marca"
+@rendermode RenderMode.InteractiveServer
 @using PruebaTecnicaFinanzauto.Models
+@using PruebaTecnicaFinanzauto.Models.DTOs
 @using PruebaTecnicaFinanzauto.Service
 @inject MarcaService MarcaService
 
-<h3>Registrar Marca</h3>
+<div class="container mt-4">
+    <h3>Administración de marcas</h3>
 
-@if (mensaje != null)
+    @* Mensajes dinámicos *@
+    @if (!string.IsNullOrEmpty(mensaje))
+    {
+        <div class="alert @(esError ? "alert-danger" : "alert-success") alert-dismissible fade show shadow-sm">
+            @mensaje
+            <button type="button" class="btn-close" @onclick="() => mensaje = null"></button>
+        </div>
+    }
+
+    @* Formulario de Registro   *@
+    <div class="card p-3 shadow-sm mb-4 border-primary">
+        <h5 class="text-primary mb-3">Registrar marca</h5>
+        <div class="row">
+            <div class="col-md-4 mb-2">
+                <label class="fw-bold">Nombre:</label>
+                <input @bind="nueva.Nombre" class="form-control" placeholder="Ej: Toyota" />
+            </div>
+            <div class="col-md-4 mb-2">
+                <label class="fw-bold">País de Origen:</label>
+                <input @bind="nueva.PaisOrigen" class="form-control" placeholder="Ej: Japón" />
+            </div>
+            <div class="col-md-4 mb-2">
+                <label class="fw-bold">Descripción:</label>
+                <input @bind="nueva.Descripcion" class="form-control" placeholder="Breve descripción..." />
+            </div>
+        </div>
+        <button class="btn btn-primary mt-3 w-100 shadow-sm" @onclick="Crear" disabled="@cargando">
+             @(cargando ? "Guardando..." : "Guardar Marca")
+        </button>
+    </div>
+
+    @* Buscador / Filtro *@
+    <div class="mb-3 d-flex justify-content-end">
+        <div class="input-group" style="max-width: 350px;">
+            <span class="input-group-text bg-white"></span>
+            <input @bind="busqueda" @bind:event="oninput" class="form-control border-start-0" placeholder="Buscar por nombre..." />
+        </div>
+    </div>
+
+    @* Tabla de Marcas *@
+    <table class="table table-hover align-middle shadow-sm border">
+        <thead class="table-dark">
+            <tr>
+                <th>Nombre</th>
+                <th>País</th>
+                <th>Descripción</th>
+                <th class="text-center">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+
+            @foreach (var m in MarcasFiltradas) 
+            {
+                <tr>
+                    <td>@m.Nombre</td>
+                    <td>@m.PaisOrigen</td>
+                    <td>@m.Descripcion</td>
+                    <td class="text-center">
+                        <div class="btn-group">
+                            <button class="btn btn-warning btn-sm" @onclick="() => AbrirEditar(m)">
+                                 Editar
+                            </button>
+                            <button class="btn btn-danger btn-sm" @onclick="() => Eliminar(m.Nombre)">
+                                Eliminar
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@*  Editar marca *@
+@if (marcaEditando != null)
 {
-    <div class="alert @(esError ? "alert-danger" : "alert-success")">@mensaje</div>
+    <div class="modal-backdrop-custom d-flex justify-content-center align-items-center">
+        <div class="card p-4 shadow animate__animated animate__zoomIn" style="max-width: 450px; width: 90%;">
+            <h5 class="mb-3">Editando Marca: <span class="text-primary">@nombreOriginal</span></h5>
+            <div class="mb-2">
+                <label class="fw-bold">Nombre:</label>
+                <input @bind="dtoEditar.Nombre" class="form-control" />
+            </div>
+            <div class="mb-2">
+                <label class="fw-bold">País Origen:</label>
+                <input @bind="dtoEditar.PaisOrigen" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label class="fw-bold">Descripción:</label>
+                <textarea @bind="dtoEditar.Descripcion" class="form-control" rows="2"></textarea>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-success flex-grow-1" @onclick="GuardarEdicion">Actualizar</button>
+                <button class="btn btn-secondary flex-grow-1" @onclick="CerrarEditar">Cancelar</button>
+            </div>
+        </div>
+    </div>
 }
 
-<div class="mb-3">
-    <label>Nombre:</label>
-    <input @bind="nuevaMarca.Nombre" class="form-control" placeholder="Ej: Toyota" />
-</div>
-<div class="mb-3">
-    <label>País de Origen:</label>
-    <input @bind="nuevaMarca.PaisOrigen" class="form-control" placeholder="Ej: Japón" />
-</div>
-<div class="mb-3">
-    <label>Descripción (opcional):</label>
-    <input @bind="nuevaMarca.Descripcion" class="form-control" />
-</div>
-<button class="btn btn-primary" @onclick="CrearMarca" disabled="@cargando">
-    @(cargando ? "Guardando..." : "Crear Marca")
-</button>
-
 @code {
-    private Marcas nuevaMarca = new();
+    private Marcas nueva = new();
+    private List<Marcas> lista = new();
+    private string busqueda = "";
     private string? mensaje;
     private bool esError;
     private bool cargando;
 
-    private async Task CrearMarca()
+    private Marcas? marcaEditando;
+    private string nombreOriginal = "";
+    private ActualizarMarcaDto dtoEditar = new();
+
+    protected override void OnInitialized() => Cargar();
+
+    private void Cargar() => lista = MarcaService.ObtenerMarcas();
+
+    private IEnumerable<Marcas> MarcasFiltradas =>
+        lista.Where(m => m.Nombre.Contains(busqueda, StringComparison.OrdinalIgnoreCase));
+
+    private async Task Crear()
     {
         cargando = true;
         mensaje = null;
         try
         {
-            await MarcaService.CrearMarcas(nuevaMarca);
-            mensaje = $"Marca '{nuevaMarca.Nombre}' creada exitosamente.";
+            await MarcaService.CrearMarcas(nueva);
+            mensaje = "Marca registrada con éxito.";
             esError = false;
-            nuevaMarca = new();
+            nueva = new Marcas();
+            Cargar();
         }
         catch (Exception ex)
         {
-            mensaje = ex.Message;
             esError = true;
+            mensaje = "Error: " + ex.Message;
         }
         finally { cargando = false; }
     }
+
+    private void Eliminar(string nombre)
+    {
+        try
+        {
+            MarcaService.EliminarMarca(nombre);
+            mensaje = "Marca eliminada correctamente.";
+            esError = false;
+            Cargar();
+        }
+        catch (Exception)
+        {
+            esError = true;
+            mensaje = "No se puede eliminar: Esta marca tiene vehículos asociados.";
+        }
+    }
+
+    private void AbrirEditar(Marcas m)
+    {
+        marcaEditando = m;
+        nombreOriginal = m.Nombre;
+        dtoEditar = new ActualizarMarcaDto
+        {
+            Nombre = m.Nombre,
+            PaisOrigen = m.PaisOrigen ?? "",
+            Descripcion = m.Descripcion
+        };
+    }
+
+    private void GuardarEdicion()
+    {
+        try
+        {
+            MarcaService.ActualizarMarca(nombreOriginal, dtoEditar);
+            mensaje = "Marca actualizada con éxito.";
+            esError = false;
+            CerrarEditar();
+            Cargar();
+        }
+        catch (Exception ex)
+        {
+            esError = true;
+            mensaje = ex.Message;
+        }
+    }
+
+    private void CerrarEditar() => marcaEditando = null;
 }

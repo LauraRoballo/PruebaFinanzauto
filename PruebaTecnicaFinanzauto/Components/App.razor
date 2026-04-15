@@ -1,4 +1,7 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Components.Web
+
+
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -11,11 +14,15 @@
     <link rel="stylesheet" href="@Assets["PruebaTecnicaFinanzauto.styles.css"]" />
     <ImportMap />
     <link rel="icon" type="image/png" href="favicon.png" />
-    <HeadOutlet />
+    
+    @* Agregamos el modo interactivo al Head para que los títulos y estilos funcionen bien *@
+    <HeadOutlet @rendermode="RenderMode.InteractiveServer" />
 </head>
 
 <body>
-    <Routes />
+    @* ESTA ES LA CLAVE: Agregamos el rendermode a Routes *@
+    <Routes @rendermode="RenderMode.InteractiveServer" />
+
     <ReconnectModal />
     <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>

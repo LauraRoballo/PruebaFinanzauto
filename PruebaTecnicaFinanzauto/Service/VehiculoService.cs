@@ -2,6 +2,7 @@
 using PruebaTecnicaFinanzauto.Data;
 using PruebaTecnicaFinanzauto.Models;
 using PruebaTecnicaFinanzauto.Models.DTOs;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace PruebaTecnicaFinanzauto.Service
 {
@@ -22,6 +23,12 @@ namespace PruebaTecnicaFinanzauto.Service
             if (marca == null)
                 throw new Exception($"La marca '{dto.NombreMarca}' no existe.");
 
+            var existe = await _context.Vehiculos.AnyAsync(v => v.VIN == dto.VIN);
+
+            if (existe)
+            {
+                throw new Exception("El VIN ingresado ya se encuentra registrado.");
+            }
             var vehiculo = new Vehiculos
             {
                 VIN = dto.VIN,
@@ -31,6 +38,7 @@ namespace PruebaTecnicaFinanzauto.Service
                 Placa = dto.Placa, // Opcional
                 MarcaId = marca.ID // No se debe escribir ya que lo lee con el nombre de marca ingresado y se adigna el Id 
             };
+
 
             _context.Vehiculos.Add(vehiculo); // Agregamos el nuevo vehiculo 
             await _context.SaveChangesAsync();
@@ -80,5 +88,25 @@ namespace PruebaTecnicaFinanzauto.Service
             await _context.SaveChangesAsync();
             return vehiculo;
         }
+
+        // Eliminar vehiculo
+
+        public async Task EliminarVehiculo(string vin)
+        {
+            var vehiculo = await _context.Vehiculos.FirstOrDefaultAsync(v => v.VIN == vin);
+            if (vehiculo == null) throw new Exception("El vehículo no existe.");
+
+            // En lugar de usar el .Include, preguntamos directamente a la tabla de Ventas
+            var tieneVentas = await _context.Ventas.AnyAsync(venta => venta.VehiculoId == vehiculo.Id);
+
+            if (tieneVentas)
+            {
+                throw new Exception("No se puede eliminar: Este vehículo tiene al menos una venta registrada en el historial.");
+            }
+
+            _context.Vehiculos.Remove(vehiculo);
+            await _context.SaveChangesAsync();
+        }
+
     }
 }

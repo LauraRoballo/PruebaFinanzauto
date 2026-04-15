@@ -1,67 +1,204 @@
-﻿@page "/"
-@page "/gestion-ventas"
-@using PruebaTecnicaFinanzauto.Models
+﻿@page "/ventas"
+@rendermode RenderMode.InteractiveServer
 @using PruebaTecnicaFinanzauto.Models.DTOs
 @using PruebaTecnicaFinanzauto.Service
 @inject VentaService VentaService
 
-<h3>Eliminar venta</h3>
+<div class="container-fluid mt-4">
+    <h3>Historial y administración de ventas</h3>
 
-<table class="table table-hover">
-    <thead>
-        <tr>
-            <th>Vehículo / VIN</th>
-            <th>Vendedor</th>
-            <th>Acción</th>
-        </tr>
-    </thead>
-    <tbody>
-        @if (listaVentas != null && listaVentas.Any())
-        {
-            @foreach (var v in listaVentas)
-            {
+    @if (!string.IsNullOrEmpty(mensaje))
+    {
+        <div class="alert @(esError ? "alert-danger" : "alert-info") alert-dismissible fade show shadow-sm border-start border-4">
+            @mensaje
+            <button type="button" class="btn-close" @onclick="() => mensaje = null"></button>
+        </div>
+    }
+
+    @* Filtro y busqueda *@
+    <div class="card p-4 shadow-sm mb-4 border-0 bg-light">
+        <div class="row align-items-end">
+            <div class="col-md-5">
+                <label class="fw-bold mb-2 text-secondary small text-uppercase">Consultar por vendedor</label>
+                <div class="input-group">
+                    <input @bind="cedulaFiltro" class="form-control" placeholder="Cédula..." />
+                    <button class="btn btn-primary" @onclick="ConsultarPorCedula">
+                        Buscar
+                    </button>
+                    @if (!string.IsNullOrEmpty(cedulaFiltro))
+                    {
+                        <button class="btn btn-outline-secondary" @onclick="LimpiarFiltro"> Buscar todo</button>
+                    }
+                </div>
+            </div>
+            
+            <div class="col-md-7 text-end">
+                <div class="p-2 border rounded bg-white d-inline-block shadow-sm">
+                    <span class="text-muted small">Ventas:</span> <span class="fw-bold text-primary">@listaVentas.Count</span>  
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Tabla donde se muestran las ventas *@
+    <div class="table-responsive card shadow-sm">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark">
                 <tr>
-                    <td>@v.Vehiculo</td>
-                    <td>@v.Vendedor</td>
-                    <td>
-                        <button class="btn btn-danger" @onclick="() => Eliminar(v.Cedula, v.VIN)">
-                            <i class="bi bi-trash"></i> Eliminar
-                        </button>
-                    </td>
+                    <th>Fecha</th>
+                    <th>Vendedor</th>
+                    <th>Vehículo</th>
+                    <th>Placa/VIN</th>
+                    <th class="text-end">Precio</th>
+                    <th class="text-center">Acciones</th>
                 </tr>
-            }
-        }
-        else
-        {
-            <tr>
-                <td colspan="3" class="text-center">No hay ventas registradas.</td>
-            </tr>
-        }
-    </tbody>
-</table>
+            </thead>
+            <tbody>
+                @foreach (var v in listaVentas)
+                {
+                    <tr>
+                        <td class="small">@v.Fecha.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            <div class="fw-bold">@v.Vendedor</div>
+                            <small class="text-muted">C.C. @v.Cedula</small>
+                        </td>
+                        <td>
+                            <div class="fw-bold text-primary">@v.Marca</div>
+                            <div class="small">@v.Vehiculo</div>
+                        </td>
+                        <td>
+                            <span class="badge @(string.IsNullOrEmpty(v.Placa) ? "bg-secondary" : "bg-info text-dark")">
+                                @(string.IsNullOrEmpty(v.Placa) ? "SIN PLACA" : v.Placa)
+                            </span>
+                        </td>
+                        <td class="text-end fw-bold text-success">@v.PrecioVenta.ToString("C0")</td>
+                        <td class="text-center">
+                            <button class="btn btn-danger btn-sm" @onclick="() => AbrirConfirmacion(v)">
+                                <i class="bi bi-trash"></i> Eliminar
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@* Confirmar la eliminación de la venta  *@
+@if (ventaAEliminar != null)
+{
+    <div class="modal-backdrop-custom d-flex justify-content-center align-items-center">
+        <div class="card p-4 shadow animate__animated animate__zoomIn" style="max-width: 400px; width: 90%;">
+            <div class="text-center">
+                <h5 class="mb-2">¿Eliminar esta venta?</h5>
+                <p class="text-muted small">
+                    Si confirmas la eliminación se borrara el registro de esta venta de forma permantente.
+                </p>
+            </div>
+            <div class="d-flex gap-2 mt-3">
+                <button class="btn btn-danger btn-sm" @onclick="ConfirmarEliminacion">Eliminar</button>
+                <button class="btn btn-secondary flex-grow-1" @onclick="() => ventaAEliminar = null">Cancelar</button>
+            </div>
+        </div>
+    </div>
+}
 
 @code {
     private List<VistaVenta> listaVentas = new();
+    private VistaVenta? ventaAEliminar;
+    private string cedulaFiltro = "";
+    private string? mensaje;
+    private bool esError;
+    private bool cargando; 
 
-    protected override async Task OnInitializedAsync()
+    //Carga información y refresca la vista la primera vez que se abre la pagina
+    protected override async Task OnAfterRenderAsync(bool firstRender) 
     {
-        // Cargamos los datos al iniciar la página
-        listaVentas = await VentaService.ObtenerReporteVentas();
+        if (firstRender)
+        {
+            await CargarTodo();
+            StateHasChanged();
+        }
     }
 
-    private async Task Eliminar(string cedula, string vin)
+    // Cargar todas las ventas
+    private async Task CargarTodo()
     {
         try
         {
-            // Llamamos al servicio para eliminar
-            await VentaService.EliminarVenta(cedula, vin);
-            
-            // Refrescamos la lista automáticamente
             listaVentas = await VentaService.ObtenerReporteVentas();
+           
+        }
+        catch (Exception ex) { mensaje = "Error: " + ex.Message; esError = true; } 
+    }
+
+    // filtrar ventas por vendedor 
+    private async Task ConsultarPorCedula()
+    {
+        if (string.IsNullOrWhiteSpace(cedulaFiltro))
+        {
+            await CargarTodo();
+            return;
+        }
+
+        cargando = true;
+        mensaje = null;
+        try
+        {
+            var resultado = await VentaService.ConsultarVentasPorCedula(cedulaFiltro.Trim());
+
+            if (resultado == null || resultado.Count == 0)
+            {
+                listaVentas = new List<VistaVenta>();
+                mensaje = $"No se encontraron ventas para la cédula: {cedulaFiltro}";
+                esError = true;
+            }
+            else
+            {
+                listaVentas = resultado;
+                mensaje = null; 
+                esError = false;
+            }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error al eliminar: {ex.Message}");
+            mensaje = "Error de conexión: " + ex.Message;
+            esError = true;
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LimpiarFiltro()
+    {
+        cedulaFiltro = "";
+        mensaje = null;
+        await CargarTodo();
+    }
+
+    private void AbrirConfirmacion(VistaVenta v) => ventaAEliminar = v;
+
+    private async Task ConfirmarEliminacion()
+    {
+        if (ventaAEliminar == null) return;
+        try
+        {
+            await VentaService.EliminarVenta(ventaAEliminar.Cedula, ventaAEliminar.VIN);
+            mensaje = "Venta eliminada con éxito.";
+            esError = false;
+            ventaAEliminar = null;
+            
+            if (string.IsNullOrEmpty(cedulaFiltro)) await CargarTodo();
+            else await ConsultarPorCedula();
+        }
+        catch (Exception ex)
+        {
+            mensaje = "No se pudo eliminar: " + ex.Message;
+            esError = true;
+            ventaAEliminar = null;
         }
     }
 }

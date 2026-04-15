@@ -17,33 +17,39 @@ namespace PruebaTecnicaFinanzauto.Service
         // Método para crear una nueva venta
         public async Task<Ventas> CrearVenta(CrearVentaDto dto)
         {
-            //  Buscar el vehículo y cargar su marca/ventas previas
+            // Buscamos el vehículo por el VIN ingresado
             var vehiculo = await _context.Vehiculos.FirstOrDefaultAsync(v => v.VIN == dto.VIN);
-
             if (vehiculo == null) throw new Exception("El vehículo no existe.");
 
-            //  Validar marca duplicada 
-            if (!string.IsNullOrEmpty(dto.Placa))
+           
+            // Si el DTO no trae placa (está vacío), verificamos si el vehículo ya tiene una.
+            if (string.IsNullOrWhiteSpace(dto.Placa))
+            {
+                if (string.IsNullOrWhiteSpace(vehiculo.Placa))
+                {
+
+                    throw new Exception("El vehículo debe tener una placa asignada para poder completar la venta.");
+                }
+            }
+            else
             {
                 var placaExiste = await _context.Vehiculos.AnyAsync(v => v.Placa == dto.Placa && v.Id != vehiculo.Id);
-
                 if (placaExiste) throw new Exception($"La placa {dto.Placa} ya está asignada a otro vehículo.");
+
+                // Actualizamos la placa del vehículo con la nueva ingresada antes de venderlo.
+                vehiculo.Placa = dto.Placa;
             }
 
-            // Venta duplicada 
-            // Revisamos si el ID del vehículo ya aparece en la tabla de Ventas
+            // Validación de venta duplicada
             var yaVendido = await _context.Ventas.AnyAsync(v => v.VehiculoId == vehiculo.Id);
+            if (yaVendido) throw new Exception("Este vehículo ya fue vendido.");
 
-            if (yaVendido)
-                throw new Exception("Este vehículo ya fue vendido. No se puede registrar otra venta para el mismo VIN/Placa.");
-
-            //  Validar Vendedor (que esté activo)
+            // Validar Vendedor
             var vendedor = await _context.Vendedores.FirstOrDefaultAsync(v => v.Cedula == dto.Cedula);
             if (vendedor == null) throw new Exception("El vendedor no existe.");
-            if (vendedor.Estado != EstadoVendedor.Activo) throw new Exception("Vendedor bloqueado o inactivo.");
+            if (vendedor.Estado != EstadoVendedor.Activo) throw new Exception("Vendedor inactivo.");
 
-            //  Proceder con la venta si cumple todo
-
+            //  Registrar la venta
             var venta = new Ventas
             {
                 Fecha = DateTime.Now,
@@ -61,6 +67,7 @@ namespace PruebaTecnicaFinanzauto.Service
         // Método para eliminar una venta por cédula del vendedor y vin (venta mal ingresada)
         public async Task EliminarVenta(string cedula, string vin)
         {
+            // No creamos un contexto nuevo, usamos el que ya tiene la clase (_context)
             var venta = await _context.Ventas
                 .Include(ve => ve.Vehiculo)
                 .Include(ve => ve.Vendedor)
@@ -68,7 +75,7 @@ namespace PruebaTecnicaFinanzauto.Service
 
             if (venta == null)
             {
-                throw new Exception("No se encontró una venta registrada con esa cédula y ese VIN.");
+                throw new Exception("No se encontró la venta");
             }
 
             _context.Ventas.Remove(venta);
@@ -82,6 +89,7 @@ namespace PruebaTecnicaFinanzauto.Service
             return await _context.VistaVentas.AsNoTracking().ToListAsync(); // AsNoTracking solo lee y no rastrea cambios 
         }
 
+
         // Se consulta con cedula de vendedor y se obtienen las ventas. Se utiliza el procedimiento almacenado (Stored Procedure)
         public async Task<List<VistaVenta>> ConsultarVentasPorCedula(string cedula)
         {
@@ -91,10 +99,24 @@ namespace PruebaTecnicaFinanzauto.Service
                 return new List<VistaVenta>(); // Retorna lista vacía si no hay ventas para la cédula
             }
 
-            return await _context.VistaVentas
-                             .FromSqlInterpolated($"EXEC sp_VehiculosPorVendedor {cedula}") // Ejecuta el procedimiento almacenado con la cédula como parámetro
-                             .ToListAsync(); // El ToListAsync es clave aquí
-        }
+            try
+            {
+                var ventas = await _context.VistaVentas
+                            .FromSqlInterpolated($"EXEC sp_VehiculosPorVendedor {cedula}") // Ejecuta el procedimiento almacenado con la cédula como parámetro
+                            .ToListAsync(); 
+
+                return ventas;
+
+            }
+            catch (Exception)
+            {
+               
+                return new List<VistaVenta>();
+
+
+            }
+
+            }
     }
     
 }

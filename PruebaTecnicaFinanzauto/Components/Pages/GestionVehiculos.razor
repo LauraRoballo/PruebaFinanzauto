@@ -1,0 +1,209 @@
+﻿@page "/gestion-vehiculos"
+@rendermode RenderMode.InteractiveServer
+@using PruebaTecnicaFinanzauto.Models
+@using PruebaTecnicaFinanzauto.Models.DTOs
+@using PruebaTecnicaFinanzauto.Service
+@inject VehiculoService VehiculoService
+@inject MarcaService MarcaService
+
+<h3>Administración de vehículos</h3>
+
+@* Mensajes dinamicos cuando hay error y cuando esta todo correcto *@
+@if (!string.IsNullOrEmpty(mensaje))
+{
+    <div class="alert @(esError ? "alert-danger" : "alert-success") alert-dismissible fade show shadow-sm">
+        @mensaje
+        <button type="button" class="btn-close" @onclick="() => mensaje = null"></button>
+    </div>
+}
+
+@* Formulario de Registro de vehiculo *@
+<div class="card p-3 shadow-sm mb-4 border-primary">
+    <h5 class="text-primary mb-3">Registrar vehículo</h5>
+    <div class="row">
+        <div class="col-md-4 mb-2">
+            <label class="fw-bold">VIN:</label>
+            <input @bind="dtoCrear.VIN" class="form-control" placeholder="Número VIN..." />
+        </div>
+        <div class="col-md-4 mb-2">
+            <label class="fw-bold">Nombre de Marca:</label>
+            <input @bind="dtoCrear.NombreMarca" class="form-control" placeholder="Ej: Toyota" />
+        </div>
+        <div class="col-md-4 mb-2">
+            <label class="fw-bold">Modelo (Nombre y Año):</label>
+            <input type="text" @bind="dtoCrear.Modelo" class="form-control" placeholder="Ej: Corolla 2024" />
+        </div>
+        <div class="col-md-4 mb-2">
+            <label class="fw-bold">Color:</label>
+            <input @bind="dtoCrear.Color" class="form-control" />
+        </div>
+        <div class="col-md-4 mb-2">
+            <label class="fw-bold">Precio de referencia:</label>
+            <input @bind="dtoCrear.PrecioReferencia" class="form-control" />
+        </div>
+        <div class="col-md-4 mb-2">
+            <label class="fw-bold">Placa (Opcional):</label>
+            <input @bind="dtoCrear.Placa" class="form-control" />
+        </div>
+    </div>
+    <button class="btn btn-primary mt-3 w-100 shadow-sm" @onclick="Crear">Guardar Vehículo</button> 
+</div>
+
+@* Tabla donde se ven todos los vehiculos *@
+<table class="table table-hover align-middle shadow-sm border">
+    <thead class="table-dark">
+        <tr>
+            <th>VIN</th>
+            <th>Marca</th>
+            <th>Modelo</th>
+            <th>Placa</th>
+            <th class="text-center">Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+		@foreach (var v in vehiculos) // Foreach para mostrar cada vehiculo en la tabla vehiculos
+        {
+            <tr>
+                <td><code class="text-dark">@v.VIN</code></td>
+                <td>@v.Marca?.Nombre</td> 
+                <td>@v.Modelo</td>
+                <td>
+                    <span class="badge @(string.IsNullOrEmpty(v.Placa) ? "bg-secondary" : "bg-info text-dark")">
+                        @(string.IsNullOrEmpty(v.Placa) ? "SIN PLACA" : v.Placa)
+                    </span>
+                </td>
+                <td class="text-center">
+                    <div class="btn-group">
+                        <button class="btn btn-warning btn-sm" @onclick="() => AbrirEditar(v)">
+                             Editar
+                        </button>
+                        <button class="btn btn-danger btn-sm" @onclick="() => ConfirmarEliminar(v.VIN)">
+                             Eliminar
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@* Modulo de edición *@
+@if (vehiculoEditando != null)
+{
+    <div class="modal-backdrop-custom d-flex justify-content-center align-items-center">
+        
+        <div class="card p-4 shadow animate__animated animate__zoomIn" style="max-width: 450px; width: 90%;">
+            <h5 class="mb-3">Editando VIN: <span class="text-primary">@vinOriginal</span></h5>
+            <div class="mb-2">
+                <label class="fw-bold">Nombre marca:</label>
+                <input @bind="dtoEditar.MarcaNombre" class="form-control" />
+            </div>
+            <div class="mb-2">
+                <label class="fw-bold">Modelo:</label>
+                <input type="text" @bind="dtoEditar.Modelo" class="form-control" />
+            </div>
+
+            <div class="mb-2">
+                <label class="fw-bold">Precio de referencia:</label>
+                <input type="text" @bind="dtoEditar.PrecioReferencia" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label class="fw-bold">Placa:</label>
+                <input @bind="dtoEditar.Placa" class="form-control" />
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-success flex-grow-1" @onclick="GuardarEdicion">Actualizar</button>
+                <button class="btn btn-secondary flex-grow-1" @onclick="() => vehiculoEditando = null">Cancelar</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private CrearVehiculoDto dtoCrear = new();
+    private ActualizarVehiculoDto dtoEditar = new();
+    private List<Vehiculos> vehiculos = new();
+    private Vehiculos? vehiculoEditando;
+    private string vinOriginal = "";
+    private string? mensaje;
+    private bool esError;
+
+    protected override async Task OnInitializedAsync() => await Cargar();
+
+    private async Task Cargar() => vehiculos = await VehiculoService.ObtenerVehiculos();
+
+    private async Task Crear()
+    {
+        try
+        {
+            await VehiculoService.CrearVehiculo(dtoCrear);
+            mensaje = "Vehículo creado con éxito.";
+            esError = false;
+            dtoCrear = new();
+            await Cargar();
+        }
+        catch (Exception ex)
+        {
+            mensaje = "Error al crear: " + (ex.InnerException?.Message ?? ex.Message);
+            esError = true;
+        }
+    }
+
+    private void AbrirEditar(Vehiculos v)
+    {
+        vehiculoEditando = v;
+        vinOriginal = v.VIN;
+        dtoEditar = new ActualizarVehiculoDto
+        {
+            MarcaNombre = v.Marca?.Nombre ?? "",
+            Modelo = v.Modelo,
+            Color = v.Color,
+            PrecioReferencia = v.PrecioReferencia,
+            Placa = v.Placa
+        };
+    }
+
+    private async Task GuardarEdicion()
+    {
+        try
+        {
+            await VehiculoService.ActualizarVehiculo(vinOriginal, dtoEditar);
+            mensaje = "Vehículo actualizado correctamente.";
+            esError = false;
+            vehiculoEditando = null;
+            await Cargar();
+        }
+        catch (Exception ex)
+        {
+            mensaje = "Error al actualizar: " + (ex.InnerException?.Message ?? ex.Message);
+            esError = true;
+        }
+    }
+
+    private async Task ConfirmarEliminar(string vin)
+    {
+        try
+        {
+			// se usa await ya que lo que se declaro en Serivce es async Task
+            await VehiculoService.EliminarVehiculo(vin);
+        
+            mensaje = "Vehículo eliminado con éxito.";
+            esError = false;
+            await Cargar();
+        }
+        catch (Exception ex)
+        {
+            esError = true;
+            // Capturamos el error de asociación (Foreign Key)
+            if (ex.Message.Contains("association") || ex.Message.Contains("relationship") ||
+                (ex.InnerException != null && ex.InnerException.Message.Contains("REFERENCE")))
+            {
+                mensaje = "No se puede eliminar: Este vehículo ya tiene ventas registradas. Primero debes eliminar las ventas asociadas en 'Gestión de Ventas'.";
+            }
+            else
+            {
+                mensaje = "Error: " + (ex.InnerException?.Message ?? ex.Message);
+            }
+        }
+    }
+}

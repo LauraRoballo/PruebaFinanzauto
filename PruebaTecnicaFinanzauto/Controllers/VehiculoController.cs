@@ -53,8 +53,28 @@ namespace PruebaTecnicaFinanzauto.Controllers
                 return BadRequest(ex.Message);
             }
         }
-    }
-}
+            // Enpoint para eliminar Vehiculo 
+
+            [HttpDelete("{vin}")] // api/vehiculo/vin
+            public async Task<IActionResult> EliminarVehiculo(string vin)
+            {
+                try
+                {
+                    // Solo esperamos a que termine, no asignamos a una variable
+                    await _service.EliminarVehiculo(vin);
+
+                    return Ok(new { mensaje = "Vehículo eliminado correctamente" });
+                }
+                catch (Exception ex)
+                {
+                    // Retornamos el mensaje de error que definimos en el Service
+                    return BadRequest(new { error = ex.Message });
+                }
+            } 
+        }
+        }
+    
+
     
 
 

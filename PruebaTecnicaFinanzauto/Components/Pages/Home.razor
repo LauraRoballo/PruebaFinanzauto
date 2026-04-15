@@ -1,0 +1,54 @@
+﻿@page "/"
+@rendermode RenderMode.InteractiveServer
+
+<PageTitle>Inicio</PageTitle>
+
+<div class="container mt-4">
+    <div class="text-center mb-5 p-4 bg-light rounded shadow-sm">
+        <h1 class="display-4 fw-bold text-primary">Sistema de inventario</h1>
+        <p class="lead text-secondary">Bienvenidos. Seleccione una acción para comenzar.</p>
+    </div>
+
+    <div class="row g-4">
+        
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-body text-center">
+                    <div class="mb-3 text-success">
+                    </div>
+                    <h5 class="card-title fw-bold">Gestión de ventas</h5>
+                    <p class="card-text text-muted">Visualiza el reporte completo de ventas y consultalas por vendedor</p>
+                    <a href="ventas" class="btn btn-outline-success w-100">Ir a ventas</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-body text-center">
+                    <div class="mb-3 text-primary">
+                    </div>
+                    <h5 class="card-title fw-bold">Vendedores</h5>
+                    <p class="card-text text-muted">Visualizar los vendedores, realiza acciones como: crear, actualizar, editar</p>
+                    <a href="vendedores" class="btn btn-outline-primary w-100">Ir a vendedores</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-body text-center">
+                    <div class="mb-3 text-warning">
+                    </div>
+                    <h5 class="card-title fw-bold">Marcas</h5>
+                    <p class="card-text text-muted">Ver las marcas que tenemos registradas </p>
+                    <a href="nueva-marca" class="btn btn-outline-warning w-100">Ver Marcas</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    
+</div>
+

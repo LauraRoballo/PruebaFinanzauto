@@ -1,4 +1,6 @@
-﻿namespace PruebaTecnicaFinanzauto.Models.DTOs
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace PruebaTecnicaFinanzauto.Models.DTOs
 {
     public class VistaVenta
     {
@@ -10,6 +12,7 @@
         public string Vendedor { get; set; } = string.Empty;
         public decimal PrecioVenta { get; set; }
 
+  
         public string Cedula { get; set; } = string.Empty;
         public string VIN { get; set; } = string.Empty;
     }

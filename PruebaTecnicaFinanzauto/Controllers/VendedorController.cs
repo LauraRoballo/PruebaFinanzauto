@@ -39,17 +39,10 @@ namespace PruebaTecnicaFinanzauto.Controllers
 
         // Endpoint para crear un nuevo vendedor
         [HttpPost]
-        public async Task<IActionResult> Crear([FromBody] Vendedores vendedor)
+        public async Task<IActionResult> Crear([FromBody] CrearVendedorDto dto)
         {
-            try
-            {
-                var nuevo = await _service.CrearVendedor(vendedor);
-                return Ok(nuevo);
-            } catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            
+            var resultado = await _service.CrearVendedor(dto);
+            return Ok(resultado);
         }
 
         // Endpoint para activar un vendedor 

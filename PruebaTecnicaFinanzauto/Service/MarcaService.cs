@@ -22,21 +22,35 @@ namespace PruebaTecnicaFinanzauto.Service
         // Crear una nueva marca
         public async Task<Marcas> CrearMarcas(Marcas marca)
         {
-            var existe = _context.Marcas.Any(m => m.Nombre.ToLower() == marca.Nombre.ToLower()); //  verifica si ya existe esa marca
+            
+            if (string.IsNullOrWhiteSpace(marca.Nombre))
+                throw new Exception("El nombre de la marca es obligatorio.");
+
+            if (string.IsNullOrWhiteSpace(marca.PaisOrigen))
+                throw new Exception("El país de origen es obligatorio.");
+       
+
+            var existe = _context.Marcas.Any(m => m.Nombre.ToLower() == marca.Nombre.ToLower());
 
             if (existe)
             {
-                throw new Exception("La marca ya existe"); // Lanza excepción (es la que muestra try/catch en el controlador)
+                throw new Exception("La marca ya existe");
             }
 
-            _context.Marcas.Add(marca); // Si no existe, se agrega la marca 
-            await _context.SaveChangesAsync(); // Se guardan los cambios. Se agrega await por el metodo async 
-            return marca; 
+            _context.Marcas.Add(marca);
+            await _context.SaveChangesAsync();
+            return marca;
         }
 
         // Actualizar una marca existente por su nombre
         public Marcas ActualizarMarca(string nombre, ActualizarMarcaDto dto)
         {
+            if (string.IsNullOrWhiteSpace(dto.Nombre))
+                throw new Exception("El nombre de la marca no puede estar vacío.");
+
+            if (string.IsNullOrWhiteSpace(dto.PaisOrigen))
+                throw new Exception("El país de origen es obligatorio para la marca.");
+
             var marca = _context.Marcas.FirstOrDefault(m => m.Nombre.ToLower() == nombre.ToLower()); //Buscar la marca por nombre, ignorando mayúsculas y minúsculas
 
             if (marca == null)

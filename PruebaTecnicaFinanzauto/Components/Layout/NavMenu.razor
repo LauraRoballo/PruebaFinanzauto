@@ -1,6 +1,6 @@
 ﻿<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="/">Registro de ventas y vehiculos</a>
+        <a class="navbar-brand" href="/">Prueba tecnica</a>
     </div>
 </div>
 
@@ -9,39 +9,44 @@
 
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
-                Inicio
+                <span class="bi bi-house-door-fill" aria-hidden="true"></span> Inicio
             </NavLink>
         </div>
 
+        @* Sección de vehiculos *@
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="editar-vendedor">
-                Editar Vendedor
+            <NavLink class="nav-link" href="gestion-vehiculos">
+                <span class="bi bi-car-front-fill" aria-hidden="true"></span> Gestión vehículos
             </NavLink>
         </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="consultar-ventas">
-                Consultar Ventas
-            </NavLink>
-        </div>
-
+        @* Sección de marcas *@
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="nueva-marca">
-                Nueva Marca
+                <span class="bi bi-tags-fill" aria-hidden="true"></span> Gestión marcas
+            </NavLink>
+        </div>
+
+
+        @* Sécción de vendedores *@
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="vendedores">
+                <span class="bi bi-people-fill" aria-hidden="true"></span> Gestión vendedores
+            </NavLink>
+        </div>
+
+
+        @* sección de ventas *@
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="nueva-venta">
+                <span class="bi bi-cart-plus-fill" aria-hidden="true"></span> Registrar venta
             </NavLink>
         </div>
 
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="gestion-ventas">
-                Eliminar Venta
+            <NavLink class="nav-link" href="ventas">
+                <span class="bi bi-search" aria-hidden="true"></span> Gestión ventas
             </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="vendedores">Ver Vendedores</NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="marcas">Ver Marcas</NavLink>
         </div>
 
     </nav>
